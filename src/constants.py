@@ -22,7 +22,9 @@ FPS = 60
 PADDLE_SPEED = 5
 BALL_SPEED = 5
 SCORE_FONT_SIZE = 64
+WINNER_FONT_SIZE = 48
 RESET_DELAY_MS = 1000  # 1 second delay before ball reset
+WINNING_SCORE = 5  # Score needed to win the game
 
 # Paddle positions
 LEFT_PADDLE_X = 50
