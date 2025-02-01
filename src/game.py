@@ -193,15 +193,6 @@ class Game:
         )
         games_rect: pygame.Rect = games_text.get_rect(midtop=(WINDOW_WIDTH // 2, INFO_MARGIN_TOP))
         self.screen.blit(games_text, games_rect)
-        
-        # Draw games needed to win
-        if not self.match_over:
-            remaining_text: pygame.Surface = self.info_font.render(
-                f"First to {GAMES_TO_WIN} games wins", 
-                True, INFO_COLOR
-            )
-            remaining_rect: pygame.Rect = remaining_text.get_rect(midbottom=(WINDOW_WIDTH // 2, GAMES_WON_Y))
-            self.screen.blit(remaining_text, remaining_rect)
     
     def draw(self) -> None:
         """Draw all game objects."""
@@ -209,8 +200,8 @@ class Game:
         
         # Draw game area separator lines
         pygame.draw.line(self.screen, WHITE, (0, GAME_AREA_TOP), (WINDOW_WIDTH, GAME_AREA_TOP))
-        pygame.draw.line(self.screen, WHITE, (0, WINDOW_HEIGHT - INFO_AREA_HEIGHT), 
-                        (WINDOW_WIDTH, WINDOW_HEIGHT - INFO_AREA_HEIGHT))
+        pygame.draw.line(self.screen, WHITE, (0, WINDOW_HEIGHT - FOOTER_HEIGHT), 
+                        (WINDOW_WIDTH, WINDOW_HEIGHT - FOOTER_HEIGHT))
         
         # Draw game objects
         self.left_paddle.draw(self.screen)
