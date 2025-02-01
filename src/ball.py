@@ -5,7 +5,8 @@ import pygame
 import math
 from .constants import (
     BALL_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH, 
-    BALL_SPEED, BALL_COLOR
+    BALL_SPEED, BALL_COLOR,
+    GAME_AREA_TOP, GAME_AREA_HEIGHT
 )
 from .paddle import Paddle
 
@@ -56,9 +57,15 @@ class Ball:
             self.reset()
             return "p1_scored"
         
-        # Wall collisions (top and bottom)
-        if new_y <= 0 or new_y >= WINDOW_HEIGHT - BALL_SIZE:
+        # Wall collisions (top and bottom of game area)
+        game_area_bottom = GAME_AREA_TOP + GAME_AREA_HEIGHT - BALL_SIZE
+        if new_y <= GAME_AREA_TOP or new_y >= game_area_bottom:
             self.angle = -self.angle  # Reflect angle
+            # Keep ball within bounds
+            if new_y <= GAME_AREA_TOP:
+                new_y = GAME_AREA_TOP
+            else:
+                new_y = game_area_bottom
         
         # Paddle collisions
         for paddle in paddles:

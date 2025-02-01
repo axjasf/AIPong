@@ -93,9 +93,11 @@ class Game:
         # Check for match winner
         if self.p1_games >= GAMES_TO_WIN:
             self.match_over = True
+            self.game_over = True  # Ensure game is also marked as over
             self.winner = "Player 1"
         elif self.p2_games >= GAMES_TO_WIN:
             self.match_over = True
+            self.game_over = True  # Ensure game is also marked as over
             self.winner = "Player 2"
     
     def reset_game(self) -> None:
@@ -115,7 +117,10 @@ class Game:
     
     def update(self) -> None:
         """Update game state."""
-        if self.game_over or self.match_over:
+        if self.match_over:
+            return
+            
+        if self.game_over:
             return
             
         if self.waiting_for_reset:
@@ -185,14 +190,6 @@ class Game:
         pygame.draw.line(self.screen, WHITE, (0, GAME_AREA_TOP), (WINDOW_WIDTH, GAME_AREA_TOP))
         pygame.draw.line(self.screen, WHITE, (0, WINDOW_HEIGHT - INFO_AREA_HEIGHT), 
                         (WINDOW_WIDTH, WINDOW_HEIGHT - INFO_AREA_HEIGHT))
-        
-        # Draw center line in game area
-        center_line_y_start = GAME_AREA_TOP
-        center_line_y_end = WINDOW_HEIGHT - INFO_AREA_HEIGHT
-        pygame.draw.line(self.screen, WHITE, 
-                        (WINDOW_WIDTH // 2, center_line_y_start),
-                        (WINDOW_WIDTH // 2, center_line_y_end),
-                        2)
         
         # Draw game objects
         self.left_paddle.draw(self.screen)
