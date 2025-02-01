@@ -6,8 +6,9 @@ from .constants import (
     WINDOW_WIDTH, WINDOW_HEIGHT, BLACK, WHITE,
     LEFT_PADDLE_X, RIGHT_PADDLE_X, FPS,
     P1_UP_KEY, P1_DOWN_KEY, P2_UP_KEY, P2_DOWN_KEY,
-    SCORE_FONT_SIZE, WINNER_FONT_SIZE, SCORE_MARGIN_TOP, 
-    P1_SCORE_X, P2_SCORE_X, RESET_DELAY_MS, WINNING_SCORE
+    SCORE_FONT_SIZE, WINNER_FONT_SIZE, INFO_FONT_SIZE, SCORE_MARGIN_TOP, 
+    P1_SCORE_X, P2_SCORE_X, RESET_DELAY_MS, POINTS_TO_WIN, GAMES_TO_WIN,
+    INFO_MARGIN_TOP, GAMES_WON_Y
 )
 from .paddle import Paddle
 from .ball import Ball
@@ -28,17 +29,21 @@ class Game:
         self.right_paddle: Paddle = Paddle(RIGHT_PADDLE_X)
         self.paddles: List[Paddle] = [self.left_paddle, self.right_paddle]
         
-        # Initialize scores
+        # Initialize scores and games
         self.p1_score: int = 0
         self.p2_score: int = 0
+        self.p1_games: int = 0
+        self.p2_games: int = 0
         self.score_font: pygame.font.Font = pygame.font.Font(None, SCORE_FONT_SIZE)
         self.winner_font: pygame.font.Font = pygame.font.Font(None, WINNER_FONT_SIZE)
+        self.info_font: pygame.font.Font = pygame.font.Font(None, INFO_FONT_SIZE)
         
         # Game state
         self.running: bool = True
         self.reset_timer: int = 0
         self.waiting_for_reset: bool = False
         self.game_over: bool = False
+        self.match_over: bool = False
         self.winner: Optional[str] = None
     
     def handle_input(self) -> None:
@@ -46,9 +51,12 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN and self.game_over:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.reset_game()
+                    if self.match_over:
+                        self.reset_match()
+                    elif self.game_over:
+                        self.reset_game()
         
         if not self.waiting_for_reset and not self.game_over:
             keys = pygame.key.get_pressed()
@@ -65,12 +73,22 @@ class Game:
                 self.right_paddle.move(up=False)
     
     def check_winner(self) -> None:
-        """Check if either player has won."""
-        if self.p1_score >= WINNING_SCORE:
+        """Check if either player has won the game or match."""
+        if self.p1_score >= POINTS_TO_WIN:
             self.game_over = True
+            self.p1_games += 1
             self.winner = "Player 1"
-        elif self.p2_score >= WINNING_SCORE:
+        elif self.p2_score >= POINTS_TO_WIN:
             self.game_over = True
+            self.p2_games += 1
+            self.winner = "Player 2"
+            
+        # Check for match winner
+        if self.p1_games >= GAMES_TO_WIN:
+            self.match_over = True
+            self.winner = "Player 1"
+        elif self.p2_games >= GAMES_TO_WIN:
+            self.match_over = True
             self.winner = "Player 2"
     
     def reset_game(self) -> None:
@@ -81,9 +99,16 @@ class Game:
         self.winner = None
         self.ball.reset()
     
+    def reset_match(self) -> None:
+        """Reset the entire match."""
+        self.p1_games = 0
+        self.p2_games = 0
+        self.match_over = False
+        self.reset_game()
+    
     def update(self) -> None:
         """Update game state."""
-        if self.game_over:
+        if self.game_over or self.match_over:
             return
             
         if self.waiting_for_reset:
@@ -108,22 +133,42 @@ class Game:
         if not self.winner:
             return
             
-        text = f"{self.winner} Wins! Press SPACE to play again"
+        if self.match_over:
+            text = f"{self.winner} Wins the Match! Press SPACE for new match"
+        else:
+            text = f"{self.winner} Wins the Game! Press SPACE to continue"
+            
         winner_text: pygame.Surface = self.winner_font.render(text, True, WHITE)
         winner_rect: pygame.Rect = winner_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
         self.screen.blit(winner_text, winner_rect)
     
     def draw_scores(self) -> None:
         """Draw the scores on the screen."""
-        # Draw Player 1 score
+        # Draw current game scores
         p1_text: pygame.Surface = self.score_font.render(str(self.p1_score), True, WHITE)
         p1_rect: pygame.Rect = p1_text.get_rect(midtop=(P1_SCORE_X, SCORE_MARGIN_TOP))
         self.screen.blit(p1_text, p1_rect)
         
-        # Draw Player 2 score
         p2_text: pygame.Surface = self.score_font.render(str(self.p2_score), True, WHITE)
         p2_rect: pygame.Rect = p2_text.get_rect(midtop=(P2_SCORE_X, SCORE_MARGIN_TOP))
         self.screen.blit(p2_text, p2_rect)
+        
+        # Draw games won (match score)
+        games_text: pygame.Surface = self.info_font.render(
+            f"Games Won - Player 1: {self.p1_games}  Player 2: {self.p2_games}", 
+            True, WHITE
+        )
+        games_rect: pygame.Rect = games_text.get_rect(midtop=(WINDOW_WIDTH // 2, INFO_MARGIN_TOP))
+        self.screen.blit(games_text, games_rect)
+        
+        # Draw games needed to win
+        if not self.match_over:
+            remaining_text: pygame.Surface = self.info_font.render(
+                f"First to {GAMES_TO_WIN} games wins", 
+                True, WHITE
+            )
+            remaining_rect: pygame.Rect = remaining_text.get_rect(midbottom=(WINDOW_WIDTH // 2, GAMES_WON_Y))
+            self.screen.blit(remaining_text, remaining_rect)
     
     def draw(self) -> None:
         """Draw all game objects."""
@@ -132,7 +177,7 @@ class Game:
         self.right_paddle.draw(self.screen)
         self.ball.draw(self.screen)
         self.draw_scores()
-        if self.game_over:
+        if self.game_over or self.match_over:
             self.draw_winner()
         pygame.display.flip()
     
