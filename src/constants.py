@@ -1,5 +1,7 @@
 """Constants used throughout the game."""
 
+import pygame
+
 # Window dimensions
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
@@ -20,4 +22,13 @@ BALL_SPEED = 5
 
 # Paddle positions
 LEFT_PADDLE_X = 50
-RIGHT_PADDLE_X = WINDOW_WIDTH - 50 - PADDLE_WIDTH 
+RIGHT_PADDLE_X = WINDOW_WIDTH - 50 - PADDLE_WIDTH
+
+# Control keys
+# Player 1 (Left paddle)
+P1_UP_KEY = pygame.K_w
+P1_DOWN_KEY = pygame.K_s
+
+# Player 2 (Right paddle)
+P2_UP_KEY = pygame.K_UP
+P2_DOWN_KEY = pygame.K_DOWN 

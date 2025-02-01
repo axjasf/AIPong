@@ -3,7 +3,8 @@
 import pygame
 from .constants import (
     WINDOW_WIDTH, WINDOW_HEIGHT, BLACK, WHITE,
-    LEFT_PADDLE_X, RIGHT_PADDLE_X, FPS
+    LEFT_PADDLE_X, RIGHT_PADDLE_X, FPS,
+    P1_UP_KEY, P1_DOWN_KEY, P2_UP_KEY, P2_DOWN_KEY
 )
 from .paddle import Paddle
 from .ball import Ball
@@ -33,13 +34,16 @@ class Game:
                 self.running = False
         
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
+        # Player 1 (Left paddle)
+        if keys[P1_UP_KEY]:
             self.left_paddle.move(up=True)
-        if keys[pygame.K_s]:
+        if keys[P1_DOWN_KEY]:
             self.left_paddle.move(up=False)
-        if keys[pygame.K_UP]:
+            
+        # Player 2 (Right paddle)
+        if keys[P2_UP_KEY]:
             self.right_paddle.move(up=True)
-        if keys[pygame.K_DOWN]:
+        if keys[P2_DOWN_KEY]:
             self.right_paddle.move(up=False)
     
     def update(self):
