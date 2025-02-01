@@ -1,11 +1,21 @@
-"""Ball class for the Pong game."""
+"""Pong Game Ball Class.
+
+This module contains the Ball class that handles:
+- Ball movement and physics
+- Collision detection with walls and paddles
+- Scoring when ball goes out of bounds
+- Ball reset after scoring
+"""
 
 from typing import List, Optional
 import pygame
 import math
 from .constants import (
-    BALL_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH, 
-    BALL_SPEED, BALL_COLOR,
+    # Game Objects
+    BALL_SIZE, BALL_SPEED, BALL_COLOR,
+    
+    # Window and Layout
+    WINDOW_WIDTH,
     GAME_AREA_TOP, GAME_AREA_HEIGHT
 )
 from .paddle import Paddle

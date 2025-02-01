@@ -1,8 +1,15 @@
-"""Paddle class for the Pong game."""
+"""Pong Game Paddle Class.
+
+This module contains the Paddle class that handles:
+- Paddle movement within game boundaries
+- Paddle rendering
+- Movement speed and constraints
+"""
 
 import pygame
 from typing import Optional
 from .constants import (
+    # Game Objects
     PADDLE_WIDTH, PADDLE_HEIGHT,
     PADDLE_SPEED, PADDLE_COLOR
 )

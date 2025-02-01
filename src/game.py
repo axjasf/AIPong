@@ -1,17 +1,38 @@
-"""Main game class for Pong."""
+"""Pong Game Main Class.
+
+This module contains the main Game class that manages:
+- Game initialization and state
+- Match and game scoring
+- Player input handling
+- Game loop and rendering
+- UI elements (header, game area, footer)
+"""
 
 import pygame
 from typing import List, Optional, Tuple
 from .constants import (
-    WINDOW_WIDTH, WINDOW_HEIGHT, BLACK, WHITE,
-    LEFT_PADDLE_X, RIGHT_PADDLE_X, FPS,
+    # Window and Layout
+    WINDOW_WIDTH, WINDOW_HEIGHT,
+    HEADER_HEIGHT, FOOTER_HEIGHT,
+    GAME_AREA_TOP, GAME_AREA_HEIGHT,
+    
+    # Colors
+    BLACK, WHITE, SCORE_COLOR, INFO_COLOR,
+    
+    # Game Rules
+    FPS, POINTS_TO_WIN, GAMES_TO_WIN,
+    RESET_DELAY_MS,
+    
+    # Controls
     P1_UP_KEY, P1_DOWN_KEY, P2_UP_KEY, P2_DOWN_KEY,
+    
+    # UI Elements
     SCORE_FONT_SIZE, WINNER_FONT_SIZE, INFO_FONT_SIZE,
     SCORE_MARGIN_TOP, P1_SCORE_X, P2_SCORE_X,
-    RESET_DELAY_MS, POINTS_TO_WIN, GAMES_TO_WIN,
     INFO_MARGIN_TOP, GAMES_WON_Y,
-    SCORE_AREA_HEIGHT, GAME_AREA_TOP, GAME_AREA_HEIGHT,
-    INFO_AREA_HEIGHT, SCORE_COLOR, INFO_COLOR,
+    
+    # Game Objects
+    LEFT_PADDLE_X, RIGHT_PADDLE_X,
     PADDLE_HEIGHT
 )
 from .paddle import Paddle
