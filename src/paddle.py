@@ -1,7 +1,10 @@
 """Paddle class for the Pong game."""
 
 import pygame
-from .constants import PADDLE_WIDTH, PADDLE_HEIGHT, WINDOW_HEIGHT, PADDLE_SPEED, WHITE
+from .constants import (
+    PADDLE_WIDTH, PADDLE_HEIGHT, WINDOW_HEIGHT,
+    PADDLE_SPEED, PADDLE_COLOR
+)
 
 class Paddle:
     """Represents a paddle with position and movement controls."""
@@ -23,4 +26,4 @@ class Paddle:
     
     def draw(self, screen):
         """Draw the paddle on the screen."""
-        pygame.draw.rect(screen, WHITE, self.rect) 
+        pygame.draw.rect(screen, PADDLE_COLOR, self.rect) 

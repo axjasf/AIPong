@@ -14,11 +14,15 @@ BALL_SIZE = 15
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+BALL_COLOR = WHITE  # Ball color, can be changed independently if needed
+PADDLE_COLOR = WHITE  # Paddle color, can be changed independently if needed
 
 # Game settings
 FPS = 60
 PADDLE_SPEED = 5
 BALL_SPEED = 5
+SCORE_FONT_SIZE = 64
+RESET_DELAY_MS = 1000  # 1 second delay before ball reset
 
 # Paddle positions
 LEFT_PADDLE_X = 50
@@ -31,4 +35,9 @@ P1_DOWN_KEY = pygame.K_s
 
 # Player 2 (Right paddle)
 P2_UP_KEY = pygame.K_UP
-P2_DOWN_KEY = pygame.K_DOWN 
+P2_DOWN_KEY = pygame.K_DOWN
+
+# Score positions
+SCORE_MARGIN_TOP = 50
+P1_SCORE_X = WINDOW_WIDTH // 4
+P2_SCORE_X = 3 * WINDOW_WIDTH // 4 

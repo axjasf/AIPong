@@ -2,7 +2,10 @@
 
 import pygame
 import math
-from .constants import BALL_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH, BALL_SPEED
+from .constants import (
+    BALL_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH, 
+    BALL_SPEED, BALL_COLOR
+)
 
 class Ball:
     """Represents the game ball with position, movement, and collision detection."""
@@ -59,4 +62,4 @@ class Ball:
     
     def draw(self, screen):
         """Draw the ball on the screen."""
-        pygame.draw.rect(screen, (255, 255, 255), self.rect) 
+        pygame.draw.rect(screen, BALL_COLOR, self.rect) 
