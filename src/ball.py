@@ -10,6 +10,7 @@ This module contains the Ball class that handles:
 from typing import List, Optional
 import pygame
 import math
+import random
 from .constants import (
     # Game Objects
     BALL_SIZE, BALL_SPEED, BALL_COLOR,
@@ -29,7 +30,9 @@ class Ball:
         self.start_y: float = y
         self.x: float = x
         self.y: float = y
-        self.angle: float = 45  # Starting angle in degrees
+        self.angle: float = random.uniform(30, 60)  # Random starting angle
+        if random.random() < 0.5:  # 50% chance to start towards each player
+            self.angle = 180 - self.angle
         self.velocity: float = BALL_SPEED
         self.rect: pygame.Rect = pygame.Rect(int(x), int(y), BALL_SIZE, BALL_SIZE)
     
@@ -37,7 +40,9 @@ class Ball:
         """Reset ball to starting position."""
         self.x = self.start_x
         self.y = self.start_y
-        self.angle = 45 if self.angle < 180 else 135  # Alternate starting direction
+        self.angle = random.uniform(30, 60)
+        if random.random() < 0.5:
+            self.angle = 180 - self.angle
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
     
@@ -80,7 +85,13 @@ class Ball:
         # Paddle collisions
         for paddle in paddles:
             if self.rect.colliderect(paddle.rect):
-                self.angle = 180 - self.angle
+                # Add some randomness to the reflection
+                self.angle = 180 - self.angle + random.uniform(-10, 10)
+                # Ensure angle is not too vertical
+                if 80 < self.angle < 100:
+                    self.angle = 80 if self.angle < 90 else 100
+                elif 260 < self.angle < 280:
+                    self.angle = 260 if self.angle < 270 else 280
                 break
         
         # Update position
