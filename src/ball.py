@@ -30,8 +30,13 @@ class Ball:
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
     
-    def move(self, paddles: List[Paddle]) -> None:
-        """Update ball position and handle collisions."""
+    def move(self, paddles: List[Paddle]) -> Optional[str]:
+        """Update ball position and handle collisions.
+        
+        Returns:
+            Optional[str]: 'p1_scored' if player 1 scored, 'p2_scored' if player 2 scored,
+                         None if no scoring occurred.
+        """
         # Convert angle to radians for math functions
         rad_angle: float = math.radians(self.angle)
         
@@ -43,10 +48,13 @@ class Ball:
         self.rect.x = int(new_x)
         self.rect.y = int(new_y)
         
-        # Check if ball is out of bounds
-        if new_x < 0 or new_x > WINDOW_WIDTH:
+        # Check if ball is out of bounds (scoring)
+        if new_x < 0:
             self.reset()
-            return
+            return "p2_scored"
+        elif new_x > WINDOW_WIDTH:
+            self.reset()
+            return "p1_scored"
         
         # Wall collisions (top and bottom)
         if new_y <= 0 or new_y >= WINDOW_HEIGHT - BALL_SIZE:
@@ -61,6 +69,7 @@ class Ball:
         # Update position
         self.x = new_x
         self.y = new_y
+        return None
     
     def draw(self, screen: pygame.Surface) -> None:
         """Draw the ball on the screen."""
