@@ -14,11 +14,10 @@ import pygame
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 
-# Layout areas (divides screen into three sections)
+# Layout areas (divides screen into two sections)
 HEADER_HEIGHT = 80  # Score display area
 GAME_AREA_TOP = HEADER_HEIGHT
-GAME_AREA_HEIGHT = WINDOW_HEIGHT - HEADER_HEIGHT - 60
-FOOTER_HEIGHT = 60  # Game info area
+GAME_AREA_HEIGHT = WINDOW_HEIGHT - HEADER_HEIGHT
 
 # ====== Game Objects ======
 # Paddle settings
@@ -42,27 +41,20 @@ BLACK = (0, 0, 0)
 BALL_COLOR = WHITE
 PADDLE_COLOR = WHITE
 SCORE_COLOR = WHITE
-INFO_COLOR = WHITE
 
 # Font sizes
 SCORE_FONT_SIZE = 48  # Current game score
 WINNER_FONT_SIZE = 36  # Winner announcements
-INFO_FONT_SIZE = 24   # Game status info
 
 # Score positions in header
 SCORE_MARGIN_TOP = 20
 P1_SCORE_X = WINDOW_WIDTH // 3
 P2_SCORE_X = (2 * WINDOW_WIDTH) // 3
 
-# Info positions in footer
-INFO_MARGIN_TOP = GAME_AREA_TOP + 10
-GAMES_WON_Y = WINDOW_HEIGHT - (FOOTER_HEIGHT // 2)
-
 # ====== Game Rules ======
 FPS = 60  # Game speed
 RESET_DELAY_MS = 1000  # Delay before ball reset after scoring
 POINTS_TO_WIN = 5  # Points needed to win a game
-GAMES_TO_WIN = 3  # Games needed to win match
 
 # ====== Controls ======
 # Player 1 (Left paddle)
