@@ -1,41 +1,43 @@
 """Ball class for the Pong game."""
 
+from typing import List, Optional
 import pygame
 import math
 from .constants import (
     BALL_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH, 
     BALL_SPEED, BALL_COLOR
 )
+from .paddle import Paddle
 
 class Ball:
     """Represents the game ball with position, movement, and collision detection."""
     
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float) -> None:
         """Initialize the ball with starting position."""
-        self.start_x = x
-        self.start_y = y
-        self.x = x
-        self.y = y
-        self.angle = 45  # Starting angle in degrees
-        self.velocity = BALL_SPEED
-        self.rect = pygame.Rect(x, y, BALL_SIZE, BALL_SIZE)
+        self.start_x: float = x
+        self.start_y: float = y
+        self.x: float = x
+        self.y: float = y
+        self.angle: float = 45  # Starting angle in degrees
+        self.velocity: float = BALL_SPEED
+        self.rect: pygame.Rect = pygame.Rect(int(x), int(y), BALL_SIZE, BALL_SIZE)
     
-    def reset(self):
+    def reset(self) -> None:
         """Reset ball to starting position."""
         self.x = self.start_x
         self.y = self.start_y
         self.angle = 45 if self.angle < 180 else 135  # Alternate starting direction
-        self.rect.x = self.x
-        self.rect.y = self.y
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
     
-    def move(self, paddles):
+    def move(self, paddles: List[Paddle]) -> None:
         """Update ball position and handle collisions."""
         # Convert angle to radians for math functions
-        rad_angle = math.radians(self.angle)
+        rad_angle: float = math.radians(self.angle)
         
         # Calculate new position
-        new_x = self.x + (self.velocity * math.cos(rad_angle))
-        new_y = self.y + (self.velocity * math.sin(rad_angle))
+        new_x: float = self.x + (self.velocity * math.cos(rad_angle))
+        new_y: float = self.y + (self.velocity * math.sin(rad_angle))
         
         # Update rect for collision detection
         self.rect.x = int(new_x)
@@ -60,6 +62,6 @@ class Ball:
         self.x = new_x
         self.y = new_y
     
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
         """Draw the ball on the screen."""
         pygame.draw.rect(screen, BALL_COLOR, self.rect) 
