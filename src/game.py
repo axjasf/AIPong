@@ -26,11 +26,13 @@ class Game:
         pygame.display.set_caption("Pong")
         self.clock: pygame.time.Clock = pygame.time.Clock()
         
-        # Create game objects
+        # Create game objects in the game area
         ball_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
         self.ball: Ball = Ball(WINDOW_WIDTH // 2, ball_y)
-        self.left_paddle: Paddle = Paddle(LEFT_PADDLE_X)
-        self.right_paddle: Paddle = Paddle(RIGHT_PADDLE_X)
+        
+        paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
+        self.left_paddle: Paddle = Paddle(LEFT_PADDLE_X, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
+        self.right_paddle: Paddle = Paddle(RIGHT_PADDLE_X, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
         self.paddles: List[Paddle] = [self.left_paddle, self.right_paddle]
         
         # Initialize scores and games
@@ -182,6 +184,14 @@ class Game:
         pygame.draw.line(self.screen, WHITE, (0, GAME_AREA_TOP), (WINDOW_WIDTH, GAME_AREA_TOP))
         pygame.draw.line(self.screen, WHITE, (0, WINDOW_HEIGHT - INFO_AREA_HEIGHT), 
                         (WINDOW_WIDTH, WINDOW_HEIGHT - INFO_AREA_HEIGHT))
+        
+        # Draw center line in game area
+        center_line_y_start = GAME_AREA_TOP
+        center_line_y_end = WINDOW_HEIGHT - INFO_AREA_HEIGHT
+        pygame.draw.line(self.screen, WHITE, 
+                        (WINDOW_WIDTH // 2, center_line_y_start),
+                        (WINDOW_WIDTH // 2, center_line_y_end),
+                        2)
         
         # Draw game objects
         self.left_paddle.draw(self.screen)
