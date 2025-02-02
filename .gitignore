@@ -31,6 +31,13 @@ ENV/
 *.swp
 *.swo
 
+# Game Data (do not commit)
+human_games.json
+ai_weights.npy
+ai_stats.json
+logs/
+*.log
+
 # OS
 .DS_Store
 .DS_Store?
