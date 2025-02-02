@@ -3,7 +3,7 @@
 This module contains dataclasses and type definitions used throughout the game.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pygame
 
 
@@ -13,7 +13,7 @@ class BallState:
     x: float = 0
     y: float = 0
     prev_x: float = 0
-    rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+    rect: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
     passed_paddle: bool = False
     hit_paddle: bool = False
 
