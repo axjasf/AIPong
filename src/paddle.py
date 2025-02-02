@@ -1,51 +1,85 @@
-"""Paddle class for Pong game."""
+"""Paddle handling system.
+
+This module contains the Paddle class that handles:
+- Paddle movement
+- Position constraints
+- Collision detection
+"""
 
 import pygame
-from .constants import PADDLE_WIDTH, PADDLE_HEIGHT, WHITE, PADDLE_SPEED
+from typing import Optional, Tuple
+
+from .constants import (
+    WINDOW_WIDTH,
+    GAME_AREA_TOP,
+    GAME_AREA_HEIGHT,
+    PADDLE_WIDTH,
+    PADDLE_HEIGHT,
+    PADDLE_SPEED,
+    PADDLE_COLOR,
+)
 
 
 class Paddle:
-    """Represents a paddle in the game."""
+    """Handles paddle movement and collision detection."""
 
-    def __init__(self, x: int, y: int, min_y: int, max_y: int) -> None:
+    def __init__(self, x: int, y: int, is_left: bool = True) -> None:
         """Initialize the paddle.
 
         Args:
-            x: X position of paddle
-            y: Y position of paddle
-            min_y: Minimum Y position (top boundary)
-            max_y: Maximum Y position (bottom boundary)
+            x: Initial x position
+            y: Initial y position
+            is_left: Whether this is the left paddle (default: True)
         """
-        self.x: int = x
-        self.y: float = float(y)  # Store as float for smooth movement
-        self.min_y: int = min_y
-        self.max_y: int = max_y - PADDLE_HEIGHT
-        self.rect: pygame.Rect = pygame.Rect(x, int(self.y), PADDLE_WIDTH, PADDLE_HEIGHT)
+        self.x = x
+        self.y = y
+        self.is_left = is_left
+        self.width = PADDLE_WIDTH
+        self.height = PADDLE_HEIGHT
+        self.speed = PADDLE_SPEED
+        self.color = PADDLE_COLOR
 
-    def move(self, up: bool) -> None:
-        """Move the paddle up or down.
+        # Create pygame rect for collision detection
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+
+    def move_up(self) -> None:
+        """Move the paddle up."""
+        new_y = self.y - self.speed
+        self.set_y(new_y)
+
+    def move_down(self) -> None:
+        """Move the paddle down."""
+        new_y = self.y + self.speed
+        self.set_y(new_y)
+
+    def update_ai(self, ball_y: float) -> None:
+        """Update AI paddle position based on ball position.
 
         Args:
-            up: True to move up, False to move down
+            ball_y: The y position of the ball
         """
-        if up and self.y > self.min_y:
-            self.y -= PADDLE_SPEED
-        elif not up and self.y < self.max_y:
-            self.y += PADDLE_SPEED
-
-        self.rect.y = int(self.y)
+        paddle_center = self.y + (self.height / 2)
+        if ball_y < paddle_center - 10:  # Add small deadzone
+            self.move_up()
+        elif ball_y > paddle_center + 10:
+            self.move_down()
 
     def get_y(self) -> float:
-        """Get the current Y position."""
+        """Get the paddle's y position."""
         return self.y
 
     def set_y(self, y: float) -> None:
-        """Set the Y position.
+        """Set the paddle's y position within game area bounds.
 
         Args:
-            y: New Y position
+            y: New y position
         """
-        self.y = max(float(self.min_y), min(y, float(self.max_y)))
+        # Ensure paddle stays within game area
+        self.y = max(
+            GAME_AREA_TOP,
+            min(y, GAME_AREA_TOP + GAME_AREA_HEIGHT - self.height),
+        )
+        # Update collision rect
         self.rect.y = int(self.y)
 
     def draw(self, screen: pygame.Surface) -> None:
@@ -54,4 +88,47 @@ class Paddle:
         Args:
             screen: Pygame surface to draw on
         """
-        pygame.draw.rect(screen, WHITE, self.rect)
+        pygame.draw.rect(screen, self.color, self.rect)
+
+    def get_collision_point(self, ball_rect: pygame.Rect) -> Optional[Tuple[float, float]]:
+        """Get the point of collision with a ball.
+
+        Args:
+            ball_rect: The ball's collision rectangle
+
+        Returns:
+            Tuple of (x, y) collision point if collision occurred, None otherwise
+        """
+        if not self.rect.colliderect(ball_rect):
+            return None
+
+        # Calculate collision point
+        if self.is_left:
+            x = self.rect.right
+        else:
+            x = self.rect.left
+
+        # Calculate relative collision point along paddle height
+        relative_y = (ball_rect.centery - self.rect.top) / self.height
+        y = ball_rect.centery
+
+        return x, y
+
+    def get_relative_hit_position(self, ball_rect: pygame.Rect) -> Optional[float]:
+        """Get the relative position where the ball hit the paddle.
+
+        Args:
+            ball_rect: The ball's collision rectangle
+
+        Returns:
+            Float between -1 and 1 indicating where the ball hit (-1 = top, 1 = bottom),
+            or None if no collision
+        """
+        collision = self.get_collision_point(ball_rect)
+        if not collision:
+            return None
+
+        # Calculate relative position (-1 to 1)
+        _, y = collision
+        relative_pos = (y - self.rect.top) / self.height
+        return 2 * relative_pos - 1  # Convert from [0,1] to [-1,1]

@@ -1,111 +1,174 @@
-"""Ball class for Pong game.
+"""Ball handling system.
 
 This module contains the Ball class that handles:
-- Ball movement and physics
-- Collision detection with walls and paddles
-- Scoring when ball goes out of bounds
-- Ball reset after scoring
+- Ball movement
+- Collision physics
+- Speed and angle calculations
 """
 
+import logging
 import math
-import random
-from typing import List, Optional
-
 import pygame
+import random
+from typing import List, Optional, Tuple
 
 from .constants import (
     WINDOW_WIDTH,
+    WINDOW_HEIGHT,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
     BALL_SIZE,
     BALL_SPEED,
+    BALL_MAX_SPEED,
+    BALL_SPEED_INCREASE,
     BALL_COLOR,
 )
 from .paddle import Paddle
 
 
 class Ball:
-    """Represents the game ball with position, movement, and collision detection."""
+    """Handles ball movement and collision physics."""
 
-    def __init__(self, x: float, y: float) -> None:
-        """Initialize the ball with starting position."""
-        self.start_x: float = x
-        self.start_y: float = y
-        self.x: float = x
-        self.y: float = y
-        self.angle: float = random.uniform(30, 60)  # Random starting angle
-        if random.random() < 0.5:  # 50% chance to start towards each player
-            self.angle = 180 - self.angle
-        self.velocity: float = BALL_SPEED
-        self.rect: pygame.Rect = pygame.Rect(int(x), int(y), BALL_SIZE, BALL_SIZE)
+    def __init__(self) -> None:
+        """Initialize the ball."""
+        self.logger = logging.getLogger(__name__)
+        self.size = BALL_SIZE
+        self.speed = BALL_SPEED
+        self.max_speed = BALL_MAX_SPEED
+        self.speed_increase = BALL_SPEED_INCREASE
+        self.color = BALL_COLOR
+
+        # Create pygame rect for collision detection
+        self.rect = pygame.Rect(0, 0, self.size, self.size)
+        self.reset()
+
+    def _normalize_velocity(self) -> None:
+        """Normalize velocity components to match exact speed using L1 norm."""
+        # We want abs(dx) + abs(dy) == speed
+        total = abs(self.dx) + abs(self.dy)
+        if total == 0:
+            return
+        self.dx = self.dx * self.speed / total
+        self.dy = self.dy * self.speed / total
 
     def reset(self) -> None:
-        """Reset ball to starting position."""
-        self.x = self.start_x
-        self.y = self.start_y
-        self.angle = random.uniform(30, 60)
-        if random.random() < 0.5:
-            self.angle = 180 - self.angle
+        """Reset ball to center with random direction."""
+        # Position ball in center
+        self.x = WINDOW_WIDTH / 2 - self.size / 2
+        self.y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (self.size / 2)
+
+        # Reset speed
+        self.speed = BALL_SPEED
+
+        # Set random angle between -45 and 45 degrees
+        angle = math.radians(random.uniform(-45, 45))
+        # Randomly choose left/right direction
+        direction = random.choice([-1, 1])
+
+        # Calculate velocity components to ensure L1 norm equals speed
+        # We want |dx| + |dy| = speed
+        # For angle A: dx = speed * cos(A), dy = speed * sin(A)
+        # Therefore: speed * (|cos(A)| + |sin(A)|) = speed
+        # So we need to divide by (|cos(A)| + |sin(A)|)
+        norm = abs(math.cos(angle)) + abs(math.sin(angle))
+        self.dx = direction * self.speed * math.cos(angle) / norm
+        self.dy = self.speed * math.sin(angle) / norm
+
+        # Update collision rect
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
+        self.logger.debug(
+            "Ball reset: pos=(%f, %f), vel=(%f, %f), speed=%f",
+            self.x,
+            self.y,
+            self.dx,
+            self.dy,
+            self.speed,
+        )
+
     def move(self, paddles: List[Paddle]) -> Optional[str]:
-        """Update ball position and handle collisions.
+        """Move the ball and handle collisions.
+
+        Args:
+            paddles: List of paddles to check for collisions
 
         Returns:
-            Optional[str]: 'p1_scored' if player 1 scored, 'p2_scored' if player 2 scored,
-                         None if no scoring occurred.
+            String indicating scoring ("p1_scored" or "p2_scored") or None
         """
-        # Convert angle to radians for math functions
-        rad_angle: float = math.radians(self.angle)
+        # Update position
+        self.x += self.dx
+        self.y += self.dy
 
-        # Calculate new position
-        new_x: float = self.x + (self.velocity * math.cos(rad_angle))
-        new_y: float = self.y + (self.velocity * math.sin(rad_angle))
+        # Update collision rect
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
 
-        # Update rect for collision detection
-        self.rect.x = int(new_x)
-        self.rect.y = int(new_y)
+        # Check wall collisions
+        if self.y <= GAME_AREA_TOP:
+            self.y = GAME_AREA_TOP
+            self.dy = abs(self.dy)  # Bounce down
+        elif self.y + self.size >= GAME_AREA_TOP + GAME_AREA_HEIGHT:
+            self.y = GAME_AREA_TOP + GAME_AREA_HEIGHT - self.size
+            self.dy = -abs(self.dy)  # Bounce up
 
-        # Check if ball is out of bounds (scoring)
-        if new_x < 0:
-            self.reset()
+        # Check scoring
+        if self.x <= 0:
+            self.x = 0  # Ensure ball stops at boundary
             return "p2_scored"
-        if new_x > WINDOW_WIDTH:
-            self.reset()
+        elif self.x + self.size >= WINDOW_WIDTH:
+            self.x = WINDOW_WIDTH - self.size  # Ensure ball stops at boundary
             return "p1_scored"
 
-        # Wall collisions (top and bottom of game area)
-        game_area_bottom = GAME_AREA_TOP + GAME_AREA_HEIGHT - BALL_SIZE
-        if new_y <= GAME_AREA_TOP or new_y >= game_area_bottom:
-            self.angle = -self.angle  # Reflect angle
-            # Keep ball within bounds
-            if new_y <= GAME_AREA_TOP:
-                new_y = GAME_AREA_TOP
-            else:
-                new_y = game_area_bottom
-
-        # Paddle collisions
+        # Check paddle collisions
         for paddle in paddles:
-            if self.rect.colliderect(paddle.rect):
-                # Add some randomness to the reflection
-                self.angle = 180 - self.angle + random.uniform(-10, 10)
-                # Ensure angle is not too vertical
-                if 80 < self.angle < 100:
-                    self.angle = 80 if self.angle < 90 else 100
-                elif 260 < self.angle < 280:
-                    self.angle = 260 if self.angle < 270 else 280
-                # Normalize angle to 0-360 range
-                self.angle = self.angle % 360
-                if self.angle < 0:
-                    self.angle += 360
-                break
+            collision = paddle.get_relative_hit_position(self.rect)
+            if collision is not None:
+                # Get collision point
+                hit_point = paddle.get_collision_point(self.rect)
+                if hit_point:
+                    # Position ball at collision point
+                    if paddle.is_left:
+                        self.x = hit_point[0]  # Position at right edge of left paddle
+                    else:
+                        self.x = hit_point[0] - self.size  # Position at left edge of right paddle
+                    self.rect.x = int(self.x)
 
-        # Update position
-        self.x = new_x
-        self.y = new_y
+                    # Increase speed
+                    self.speed = min(self.speed + self.speed_increase, self.max_speed)
+
+                    # Calculate new angle based on where ball hit paddle
+                    # collision is between -1 (top) and 1 (bottom)
+                    angle = math.radians(collision * 45)  # Convert to angle between -45 and 45
+
+                    # Calculate new velocity components with L1 norm normalization
+                    norm = abs(math.cos(angle)) + abs(math.sin(angle))
+                    if paddle.is_left:
+                        # Ball hit left paddle, should move right
+                        self.dx = abs(self.speed * math.cos(angle) / norm)
+                    else:
+                        # Ball hit right paddle, should move left
+                        self.dx = -abs(self.speed * math.cos(angle) / norm)
+                    self.dy = self.speed * math.sin(angle) / norm
+
+                    self.logger.debug(
+                        "Paddle collision: pos=(%f, %f), vel=(%f, %f), speed=%f, angle=%f",
+                        self.x,
+                        self.y,
+                        self.dx,
+                        self.dy,
+                        self.speed,
+                        math.degrees(angle),
+                    )
+
+                    break  # Only collide with one paddle per frame
+
         return None
 
     def draw(self, screen: pygame.Surface) -> None:
-        """Draw the ball on the screen."""
-        pygame.draw.rect(screen, BALL_COLOR, self.rect)
+        """Draw the ball on the screen.
+
+        Args:
+            screen: Pygame surface to draw on
+        """
+        pygame.draw.rect(screen, self.color, self.rect)

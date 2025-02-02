@@ -1,15 +1,16 @@
-"""Test suite for game state and scoring."""
+"""Test suite for game logic."""
 
 import pytest
 import pygame
 from src.game import Game
 from src.constants import (
+    WINDOW_WIDTH,
+    GAME_AREA_WIDTH,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
-    GAME_AREA_WIDTH,
-    PADDLE_WIDTH,
+    POINTS_TO_WIN,
     PADDLE_HEIGHT,
-    BALL_SIZE
+    BALL_SIZE,
 )
 
 
@@ -22,80 +23,79 @@ def game() -> Game:
 
 def test_game_initialization(game: Game) -> None:
     """Test game is initialized with correct state."""
+    assert game.running
+    assert not game.game_over
+    assert game.winner is None
     assert game.player1.score == 0
     assert game.player2.score == 0
-    assert not game.game_over
-    assert game.ball is not None
-    assert game.player1.paddle is not None
-    assert game.player2.paddle is not None
 
 
 def test_game_scoring_p1(game: Game) -> None:
     """Test player 1 scoring."""
-    initial_score = game.player1.score
+    # Move ball to right edge to trigger score
+    game.ball.x = WINDOW_WIDTH - 1
+    game.ball.dx = 1  # Moving right
     
-    # Move ball past right boundary to trigger p1 score
-    game.ball.x = GAME_AREA_WIDTH + BALL_SIZE
+    # Update game to trigger scoring
     game.update()
     
-    assert game.player1.score == initial_score + 1
-    assert game.ball.x == GAME_AREA_WIDTH // 2  # Ball should reset
+    assert game.player1.score == 1
+    assert game.player2.score == 0
+    # Ball should be at the right edge
+    assert game.ball.x == WINDOW_WIDTH - BALL_SIZE
 
 
 def test_game_scoring_p2(game: Game) -> None:
     """Test player 2 scoring."""
-    initial_score = game.player2.score
+    # Move ball to left edge to trigger score
+    game.ball.x = 1
+    game.ball.dx = -1  # Moving left
     
-    # Move ball past left boundary to trigger p2 score
-    game.ball.x = -BALL_SIZE
+    # Update game to trigger scoring
     game.update()
     
-    assert game.player2.score == initial_score + 1
-    assert game.ball.x == GAME_AREA_WIDTH // 2  # Ball should reset
+    assert game.player1.score == 0
+    assert game.player2.score == 1
+    # Ball should be at the left edge
+    assert game.ball.x == 0
 
 
 def test_game_over_condition(game: Game) -> None:
     """Test game over condition."""
-    # Set score close to winning
-    game.player1.score = 9
-    assert not game.game_over
+    # Give player 1 winning score
+    game.player1.score = POINTS_TO_WIN
     
-    # Score winning point
-    game.ball.x = GAME_AREA_WIDTH + BALL_SIZE
+    # Update game to trigger game over check
+    game.ball.x = WINDOW_WIDTH - 1  # Position for scoring
+    game.ball.dx = 1  # Moving right
     game.update()
     
     assert game.game_over
-    assert game.player1.score == 10
+    assert game.winner == "Player 1"
 
 
 def test_paddle_movement(game: Game) -> None:
-    """Test paddle movement in game context."""
-    initial_y_p1 = game.player1.paddle.get_y()
-    initial_y_p2 = game.player2.paddle.get_y()
+    """Test paddle movement."""
+    initial_y = game.player1.paddle.y
     
-    # Move paddles through player objects
-    game.player1.paddle.move(up=True)
-    game.player2.paddle.move(up=False)
+    # Move paddle up
+    game.player1.paddle.move_up()
+    assert game.player1.paddle.y == initial_y - game.player1.paddle.speed
     
-    assert game.player1.paddle.get_y() < initial_y_p1
-    assert game.player2.paddle.get_y() > initial_y_p2
+    # Move paddle down
+    game.player1.paddle.move_down()
+    assert game.player1.paddle.y == initial_y
 
 
 def test_ball_paddle_collision(game: Game) -> None:
-    """Test ball collision with paddles in game context."""
-    # Position ball near p1 paddle
-    game.ball.x = PADDLE_WIDTH + BALL_SIZE
-    game.ball.y = game.player1.paddle.get_y() + (PADDLE_HEIGHT // 2)
-    game.ball.angle = 180  # Moving left
+    """Test ball-paddle collision."""
+    # Position ball just to the left of paddle 1
+    game.ball.x = game.player1.paddle.x + game.player1.paddle.width
+    game.ball.y = game.player1.paddle.y + (PADDLE_HEIGHT // 2)
+    game.ball.dx = -1  # Moving left
     
-    # Update ball rect for collision detection
-    game.ball.rect.x = int(game.ball.x)
-    game.ball.rect.y = int(game.ball.y)
-    
-    initial_angle = game.ball.angle
+    # Update game to trigger collision
     game.update()
     
-    # After collision, angle should be normalized to 0-360 range
-    assert 0 <= game.ball.angle <= 360
-    # Angle should change to roughly opposite direction (180 ± some randomness)
-    assert 160 <= game.ball.angle <= 200 
+    # Ball should bounce right
+    assert game.ball.dx > 0 
