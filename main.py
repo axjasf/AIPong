@@ -20,9 +20,8 @@ def print_usage():
     print("\nOptions:")
     print("  --speed      : Run games at maximum speed")
     print("  --minimal    : Minimal logging (good for overnight runs)")
-    print("  --easy       : Easy computer opponent (50-200ms reaction)")
-    print("  --normal     : Normal computer opponent (30-50ms reaction)")
-    print("  --hard       : Hard computer opponent (0-30ms reaction)")
+    print("  --p1         : First player difficulty (easy/normal/hard)")
+    print("  --p2         : Second player difficulty (easy/normal/hard)")
 
 
 def create_computer_player(paddle, difficulty: Optional[str] = None) -> ComputerPlayer:
@@ -46,7 +45,8 @@ def main():
     mode = "human-human"  # default mode
     headless = False
     minimal_logging = False
-    difficulty: Optional[str] = None
+    p1_difficulty = "normal"  # default difficulty for player 1
+    p2_difficulty = "normal"  # default difficulty for player 2
 
     args = sys.argv[1:]
     i = 0
@@ -56,12 +56,20 @@ def main():
             headless = True
         elif arg == "--minimal":
             minimal_logging = True
-        elif arg == "--easy":
-            difficulty = "easy"
-        elif arg == "--normal":
-            difficulty = "normal"
-        elif arg == "--hard":
-            difficulty = "hard"
+        elif arg == "--p1" and i + 1 < len(args):
+            p1_difficulty = args[i + 1].lower()
+            if p1_difficulty not in ["easy", "normal", "hard"]:
+                print(f"Invalid difficulty for player 1: {p1_difficulty}")
+                print_usage()
+                return
+            i += 1
+        elif arg == "--p2" and i + 1 < len(args):
+            p2_difficulty = args[i + 1].lower()
+            if p2_difficulty not in ["easy", "normal", "hard"]:
+                print(f"Invalid difficulty for player 2: {p2_difficulty}")
+                print_usage()
+                return
+            i += 1
         elif arg.lower() in ["human-human", "human-comp", "comp-comp"]:
             mode = arg.lower()
         else:
@@ -77,17 +85,14 @@ def main():
     if mode == "human-human":
         game = Game(HumanPlayer, HumanPlayer, headless=headless)
     elif mode == "human-comp":
-        game = Game(HumanPlayer, ComputerPlayer, headless=headless)
-        # Set difficulty for computer player after initialization
-        if isinstance(game.player2, ComputerPlayer):
-            game.player2.reaction_delay = game.player2.DELAY_RANGES[difficulty or "normal"][0]
+        # Create computer player with specified difficulty
+        computer = lambda p: ComputerPlayer(p, difficulty=p2_difficulty)
+        game = Game(HumanPlayer, computer, headless=headless)
     elif mode == "comp-comp":
-        game = Game(ComputerPlayer, ComputerPlayer, headless=headless)
-        # Set difficulty for both computer players
-        if isinstance(game.player1, ComputerPlayer):
-            game.player1.reaction_delay = game.player1.DELAY_RANGES[difficulty or "normal"][0]
-        if isinstance(game.player2, ComputerPlayer):
-            game.player2.reaction_delay = game.player2.DELAY_RANGES[difficulty or "normal"][0]
+        # Create both computer players with their respective difficulties
+        computer1 = lambda p: ComputerPlayer(p, difficulty=p1_difficulty)
+        computer2 = lambda p: ComputerPlayer(p, difficulty=p2_difficulty)
+        game = Game(computer1, computer2, headless=headless)
     else:
         print(f"Unknown mode: {mode}")
         print_usage()

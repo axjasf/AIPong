@@ -9,7 +9,7 @@ This module contains the main Game class that manages:
 
 import logging
 import os
-from typing import List, Optional, Type, Tuple, Union, TypeVar
+from typing import List, Optional, Type, Tuple, Union, TypeVar, Callable
 
 import pygame
 
@@ -61,15 +61,17 @@ class Game:
 
     def __init__(
         self,
-        player1_type: Type[P] = HumanPlayer,
-        player2_type: Type[P] = HumanPlayer,
+        player1_type: Union[Type[P], Callable[[Paddle], P]] = HumanPlayer,
+        player2_type: Union[Type[P], Callable[[Paddle], P]] = HumanPlayer,
         headless: bool = False,
         record_gameplay: bool = False,
     ) -> None:
         """Initialize the game, its objects and pygame."""
         self.logger = logging.getLogger(__name__)
         self.logger.info(
-            "Initializing game with players: %s vs %s", player1_type.__name__, player2_type.__name__
+            "Initializing game with players: %s vs %s", 
+            getattr(player1_type, "__name__", player1_type.__class__.__name__),
+            getattr(player2_type, "__name__", player2_type.__class__.__name__)
         )
 
         self.headless = headless
@@ -98,7 +100,10 @@ class Game:
         self.player1: P
         self.player2: P
 
-        if player1_type == HumanPlayer and not headless:
+        # Initialize player 1
+        if callable(player1_type):
+            self.player1 = player1_type(self.paddle_p1)
+        elif player1_type == HumanPlayer and not headless:
             self.player1 = HumanPlayer(self.paddle_p1, P1_UP_KEY, P1_DOWN_KEY)
         elif player1_type == ComputerPlayer:
             self.player1 = ComputerPlayer(self.paddle_p1)
@@ -111,7 +116,10 @@ class Game:
                 )
             self.player1 = player1_type(self.paddle_p1, self.game_state)
 
-        if player2_type == HumanPlayer and not headless:
+        # Initialize player 2
+        if callable(player2_type):
+            self.player2 = player2_type(self.paddle_p2)
+        elif player2_type == HumanPlayer and not headless:
             self.player2 = HumanPlayer(self.paddle_p2, P2_UP_KEY, P2_DOWN_KEY)
         elif player2_type == ComputerPlayer:
             self.player2 = ComputerPlayer(self.paddle_p2)
@@ -123,6 +131,12 @@ class Game:
                     "Non-headless mode requires HumanPlayer, ComputerPlayer, or AIPlayer"
                 )
             self.player2 = player2_type(self.paddle_p2, self.game_state)
+
+        # Set ball reference for computer players
+        if isinstance(self.player1, ComputerPlayer):
+            self.player1.ball = self.ball
+        if isinstance(self.player2, ComputerPlayer):
+            self.player2.ball = self.ball
 
         self.paddles: List[Paddle] = [self.player1.paddle, self.player2.paddle]
 
