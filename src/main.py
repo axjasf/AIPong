@@ -10,14 +10,15 @@ This module contains the main game loop and initialization:
 import argparse
 import logging
 import os
+from typing import Optional, Union
+
 import pygame
-import sys
-from typing import Optional, Tuple
 
 from .constants import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     GAME_AREA_TOP,
+    GAME_AREA_HEIGHT,
     PADDLE_WIDTH,
     PADDLE_HEIGHT,
     P1_UP_KEY,
@@ -57,67 +58,6 @@ def setup_logging(log_dir: str = LOG_DIR) -> None:
     )
 
 
-def init_pygame() -> Tuple[pygame.Surface, pygame.font.Font]:
-    """Initialize Pygame and create window.
-
-    Returns:
-        Tuple of (screen surface, font)
-    """
-    pygame.init()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Pong")
-    font = pygame.font.Font(None, FONT_SIZE)
-    return screen, font
-
-
-def draw_game(
-    screen: pygame.Surface,
-    font: pygame.font.Font,
-    ball: Ball,
-    player1: HumanPlayer | AIPlayer,
-    player2: HumanPlayer | AIPlayer,
-    scoring: GameScore,
-) -> None:
-    """Draw the game state.
-
-    Args:
-        screen: Pygame surface to draw on
-        font: Font for rendering text
-        ball: Ball object
-        player1: Left player
-        player2: Right player
-        scoring: Scoring system
-    """
-    # Clear screen
-    screen.fill(BLACK)
-
-    # Draw center line
-    pygame.draw.line(
-        screen,
-        DIVIDER_COLOR,
-        (WINDOW_WIDTH // 2, GAME_AREA_TOP),
-        (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
-        1,
-    )
-
-    # Draw scores
-    scores = scoring.get_scores()
-    score_text = f"{scores[0]}  {scores[1]}"
-    text_surface = font.render(score_text, True, SCORE_COLOR)
-    text_rect = text_surface.get_rect(
-        centerx=WINDOW_WIDTH // 2, top=SCORE_OFFSET
-    )
-    screen.blit(text_surface, text_rect)
-
-    # Draw game objects
-    ball.draw(screen)
-    player1.paddle.draw(screen)
-    player2.paddle.draw(screen)
-
-    # Update display
-    pygame.display.flip()
-
-
 def main(
     player1_type: str = "human",
     player2_type: str = "human",
@@ -139,36 +79,34 @@ def main(
     logger = logging.getLogger(__name__)
     logger.info("Starting Pong game")
 
-    # Initialize display if not headless
-    screen = None
-    font = None
-    if not headless:
-        screen, font = init_pygame()
-
     # Create game objects
     ball = Ball()
     game_state = GameState()
 
     # Create paddles
-    left_paddle = Paddle(PADDLE_WIDTH, GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2)
+    left_paddle = Paddle(
+        PADDLE_WIDTH,
+        GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2,
+        True
+    )
     right_paddle = Paddle(
         WINDOW_WIDTH - 2 * PADDLE_WIDTH,
         GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2,
-        is_left=False,
+        False
     )
 
     # Create players
-    player1: HumanPlayer | AIPlayer
+    player1: Union[HumanPlayer, AIPlayer]
     if player1_type == "human":
         player1 = HumanPlayer(left_paddle, P1_UP_KEY, P1_DOWN_KEY)
     else:
-        player1 = AIPlayer(left_paddle)
+        player1 = AIPlayer(left_paddle, game_state)
 
-    player2: HumanPlayer | AIPlayer
+    player2: Union[HumanPlayer, AIPlayer]
     if player2_type == "human":
         player2 = HumanPlayer(right_paddle, P2_UP_KEY, P2_DOWN_KEY)
     else:
-        player2 = AIPlayer(right_paddle)
+        player2 = AIPlayer(right_paddle, game_state)
 
     # Create scoring system
     scoring = GameScore()

@@ -6,11 +6,11 @@ This module contains the Paddle class that handles:
 - Collision detection
 """
 
-import pygame
 from typing import Optional, Tuple
 
+import pygame
+
 from .constants import (
-    WINDOW_WIDTH,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
     PADDLE_WIDTH,
@@ -23,7 +23,7 @@ from .constants import (
 class Paddle:
     """Handles paddle movement and collision detection."""
 
-    def __init__(self, x: int, y: int, is_left: bool = True) -> None:
+    def __init__(self, x: float, y: float, is_left: bool = True) -> None:
         """Initialize the paddle.
 
         Args:
@@ -31,16 +31,16 @@ class Paddle:
             y: Initial y position
             is_left: Whether this is the left paddle (default: True)
         """
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
         self.is_left = is_left
         self.width = PADDLE_WIDTH
         self.height = PADDLE_HEIGHT
-        self.speed = PADDLE_SPEED
+        self.speed = float(PADDLE_SPEED)
         self.color = PADDLE_COLOR
 
         # Create pygame rect for collision detection
-        self.rect = pygame.Rect(x, y, self.width, self.height)
+        self.rect = pygame.Rect(int(x), int(y), self.width, self.height)
 
     def move_up(self) -> None:
         """Move the paddle up."""
@@ -65,7 +65,11 @@ class Paddle:
             self.move_down()
 
     def get_y(self) -> float:
-        """Get the paddle's y position."""
+        """Get the paddle's y position.
+
+        Returns:
+            Current y position as float
+        """
         return self.y
 
     def set_y(self, y: float) -> None:
@@ -76,8 +80,8 @@ class Paddle:
         """
         # Ensure paddle stays within game area
         self.y = max(
-            GAME_AREA_TOP,
-            min(y, GAME_AREA_TOP + GAME_AREA_HEIGHT - self.height),
+            float(GAME_AREA_TOP),
+            min(float(y), float(GAME_AREA_TOP + GAME_AREA_HEIGHT - self.height)),
         )
         # Update collision rect
         self.rect.y = int(self.y)
@@ -104,13 +108,12 @@ class Paddle:
 
         # Calculate collision point
         if self.is_left:
-            x = self.rect.right
+            x = float(self.rect.right)
         else:
-            x = self.rect.left
+            x = float(self.rect.left)
 
-        # Calculate relative collision point along paddle height
-        relative_y = (ball_rect.centery - self.rect.top) / self.height
-        y = ball_rect.centery
+        # Calculate y position at point of collision
+        y = float(ball_rect.centery)
 
         return x, y
 
@@ -130,5 +133,5 @@ class Paddle:
 
         # Calculate relative position (-1 to 1)
         _, y = collision
-        relative_pos = (y - self.rect.top) / self.height
+        relative_pos = (y - float(self.rect.top)) / float(self.height)
         return 2 * relative_pos - 1  # Convert from [0,1] to [-1,1]

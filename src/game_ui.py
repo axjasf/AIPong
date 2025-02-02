@@ -6,7 +6,7 @@ This module contains the GameUI class that handles all UI-related functionality:
 - Rendering scores and text
 """
 
-from typing import Optional
+from typing import List, Optional
 
 import pygame
 
@@ -14,6 +14,7 @@ from .constants import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     GAME_AREA_TOP,
+    GAME_AREA_HEIGHT,
     BLACK,
     WHITE,
     SCORE_COLOR,
@@ -74,15 +75,37 @@ class GameUI:
         p2_rect: pygame.Rect = p2_text.get_rect(midtop=(P2_SCORE_X, SCORE_MARGIN_TOP))
         self.screen.blit(p2_text, p2_rect)
 
-    def draw(self, ball: Ball, paddles: list[Paddle], score_p1: int, score_p2: int, game_over: bool, winner: Optional[str]) -> None:
-        """Draw all game objects and UI elements."""
+    def draw(
+        self,
+        ball: Ball,
+        paddles: List[Paddle],
+        score_p1: int,
+        score_p2: int,
+        game_over: bool,
+        winner: Optional[str],
+    ) -> None:
+        """Draw all game objects and UI elements.
+
+        Args:
+            ball: Ball object to draw
+            paddles: List of paddles to draw
+            score_p1: Player 1's score
+            score_p2: Player 2's score
+            game_over: Whether the game is over
+            winner: Winner's name if game is over
+        """
         if self.headless or not self.screen:
             return
 
         self.screen.fill(BLACK)
 
         # Draw game area separator line
-        pygame.draw.line(self.screen, WHITE, (0, GAME_AREA_TOP), (WINDOW_WIDTH, GAME_AREA_TOP))
+        pygame.draw.line(
+            self.screen,
+            WHITE,
+            (0, GAME_AREA_TOP),
+            (WINDOW_WIDTH, GAME_AREA_TOP),
+        )
 
         # Draw game objects
         for paddle in paddles:

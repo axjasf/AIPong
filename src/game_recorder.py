@@ -7,11 +7,23 @@ This module contains the GameRecorder class that handles:
 - Saving training data
 """
 
-import json
 import logging
-import numpy as np
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, TypedDict, Union
+
+import numpy as np
+
+
+class FrameData(TypedDict):
+    """Type definition for frame data."""
+
+    state: np.ndarray
+    ball_pos: tuple[float, float]
+    paddle_pos: tuple[float, float]
+    left_action: Optional[bool]
+    right_action: Optional[bool]
+    left_hit: int
+    right_hit: int
 
 
 class GameRecorder:
@@ -28,8 +40,8 @@ class GameRecorder:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize game recording
-        self.current_game: List[Dict[str, Union[np.ndarray, Optional[bool], int, float]]] = []
-        self.games: List[List[Dict[str, Union[np.ndarray, Optional[bool], int, float]]]] = []
+        self.current_game: List[FrameData] = []
+        self.games: List[List[FrameData]] = []
         self.game_count = 0
         self.current_winner: Optional[str] = None
         self.current_hits = 0
@@ -65,7 +77,7 @@ class GameRecorder:
             left_hit_ball: Whether left paddle hit the ball
             right_hit_ball: Whether right paddle hit the ball
         """
-        frame_data = {
+        frame_data: FrameData = {
             "state": state,
             "ball_pos": (ball_x, ball_y),
             "paddle_pos": (left_paddle_y, right_paddle_y),
@@ -165,7 +177,7 @@ class GameRecorder:
             self.games = []
 
         except Exception as e:
-            self.logger.error("Failed to save games: %s", e)
+            self.logger.error("Failed to save games: %s", str(e))
 
     def __del__(self) -> None:
         """Save any remaining games on deletion."""

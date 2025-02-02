@@ -7,8 +7,9 @@ This module contains the GameLoop class that handles:
 """
 
 import logging
+from typing import Optional, Tuple, Union
+
 import pygame
-from typing import Optional, Tuple
 
 from .constants import (
     GAME_AREA_TOP,
@@ -16,9 +17,15 @@ from .constants import (
     PADDLE_HEIGHT,
     FPS,
     RESET_DELAY_MS,
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    DIVIDER_COLOR,
+    SCORE_OFFSET,
+    FONT_SIZE,
+    SCORE_COLOR,
+    BLACK,
 )
 from .ball import Ball
-from .paddle import Paddle
 from .player import HumanPlayer, AIPlayer
 from .game_state import GameState
 from .game_score import GameScore
@@ -30,9 +37,10 @@ class GameLoop:
 
     def __init__(
         self,
+        *,  # Force keyword arguments
         ball: Ball,
-        player1: HumanPlayer | AIPlayer,
-        player2: HumanPlayer | AIPlayer,
+        player1: Union[HumanPlayer, AIPlayer],
+        player2: Union[HumanPlayer, AIPlayer],
         game_state: GameState,
         scoring: GameScore,
         recorder: Optional[GameRecorder] = None,
@@ -48,12 +56,20 @@ class GameLoop:
         self.recorder = recorder
         self.headless = headless
 
+        # Initialize display if not headless
+        self.screen = None
+        if not headless:
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+            pygame.display.set_caption("Pong")
+
         self.clock = pygame.time.Clock()
         self.running = True
         self.waiting_for_reset = False
         self.reset_timer = 0
         self.games_completed = 0
         self.max_games: Optional[int] = None
+        self.game_over = False
+        self.winner: Optional[str] = None
 
     def handle_input(self) -> None:
         """Handle keyboard input for game control."""
@@ -64,7 +80,7 @@ class GameLoop:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and self.scoring.game_over:
+                if event.key == pygame.K_SPACE and self.game_over:
                     self.reset_game()
 
     def reset_game(self) -> None:
@@ -73,6 +89,8 @@ class GameLoop:
         self.player2.reset_score()
         self.scoring.reset()
         self.ball.reset()
+        self.game_over = False
+        self.winner = None
 
         # Reset paddle positions to middle
         paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
@@ -103,8 +121,8 @@ class GameLoop:
 
     def update(self) -> None:
         """Update game state."""
-        if self.scoring.game_over:
-            self.logger.info("Game over. Winner: %s", self.scoring.winner)
+        if self.game_over:
+            self.logger.info("Game over. Winner: %s", self.winner)
             self.reset_game()
             if self.recorder:
                 self.recorder.end_game()
@@ -117,7 +135,6 @@ class GameLoop:
                 self.logger.debug("Resetting ball position")
                 self.waiting_for_reset = False
                 self.ball.reset()
-                self.scoring.reset()
                 # Reset paddle positions to middle
                 paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
                 self.player1.paddle.set_y(paddle_y)
@@ -156,22 +173,47 @@ class GameLoop:
             # Track ball hits
             left_hit_ball = self.player1.paddle.rect.colliderect(self.ball.rect)
             right_hit_ball = self.player2.paddle.rect.colliderect(self.ball.rect)
-            self.scoring.track_hits(left_hit_ball, right_hit_ball)
+
+            if left_hit_ball:
+                self.game_state.increment_hits(True)
+            if right_hit_ball:
+                self.game_state.increment_hits(False)
 
             # Handle scoring
             if result:
                 if self.recorder:
                     # Record who won the point
                     side = "left" if result == "p1_scored" else "right"
-                    hits = self.scoring.scores[0] if side == "left" else self.scoring.scores[1]
+                    hits = (
+                        self.game_state.left_hits
+                        if side == "left"
+                        else self.game_state.right_hits
+                    )
                     self.recorder.set_winner(side, hits)
 
-                self.scoring.handle_score(self.player1, self.player2, result)
+                # Update scores
+                if result == "p1_scored":
+                    self.scoring.increment_score(True)
+                    self.player1.increment_score()
+                else:
+                    self.scoring.increment_score(False)
+                    self.player2.increment_score()
+
                 self.waiting_for_reset = True
                 self.reset_timer = pygame.time.get_ticks()
+                self.game_state.reset_hits()
 
             # Check for game over
-            self.scoring.check_winner(self.player1, self.player2)
+            winner_idx = self.scoring.check_winner()
+            if winner_idx is not None:
+                self.game_over = True
+                self.winner = f"Player {winner_idx + 1}"
+
+                # Handle AI game end
+                if isinstance(self.player1, AIPlayer):
+                    self.player1.on_game_end(winner_idx == 0)
+                if isinstance(self.player2, AIPlayer):
+                    self.player2.on_game_end(winner_idx == 1)
 
             # Record frame if in human game
             if self.recorder:
@@ -187,8 +229,43 @@ class GameLoop:
                     right_hit_ball,
                 )
 
+    def draw(self) -> None:
+        """Draw the game state."""
+        if self.headless or not self.screen:
+            return
+
+        # Clear screen
+        self.screen.fill(BLACK)
+
+        # Draw center line
+        pygame.draw.line(
+            self.screen,
+            DIVIDER_COLOR,
+            (WINDOW_WIDTH // 2, GAME_AREA_TOP),
+            (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
+            1,
+        )
+
+        # Draw game objects
+        self.ball.draw(self.screen)
+        self.player1.paddle.draw(self.screen)
+        self.player2.paddle.draw(self.screen)
+
+        # Draw scores
+        self.scoring.draw(self.screen)
+
+        # Update display
+        pygame.display.flip()
+
     def run(self, max_games: Optional[int] = None) -> Tuple[Optional[AIPlayer], Optional[AIPlayer]]:
-        """Run the main game loop."""
+        """Run the main game loop.
+
+        Args:
+            max_games: Maximum number of games to play
+
+        Returns:
+            Tuple of (player1 if AI, player2 if AI)
+        """
         self.max_games = max_games
 
         while self.running:
@@ -198,6 +275,9 @@ class GameLoop:
             updates_per_frame = 10 if self.headless else 1
             for _ in range(updates_per_frame):
                 self.update()
+
+            # Draw game state
+            self.draw()
 
             # Control speed
             if not self.headless:

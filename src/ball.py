@@ -8,13 +8,13 @@ This module contains the Ball class that handles:
 
 import logging
 import math
-import pygame
 import random
-from typing import List, Optional, Tuple
+from typing import List, Optional
+
+import pygame
 
 from .constants import (
     WINDOW_WIDTH,
-    WINDOW_HEIGHT,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
     BALL_SIZE,
@@ -33,13 +33,21 @@ class Ball:
         """Initialize the ball."""
         self.logger = logging.getLogger(__name__)
         self.size = BALL_SIZE
-        self.speed = BALL_SPEED
-        self.max_speed = BALL_MAX_SPEED
-        self.speed_increase = BALL_SPEED_INCREASE
+        self.speed = float(BALL_SPEED)
+        self.max_speed = float(BALL_MAX_SPEED)
+        self.speed_increase = float(BALL_SPEED_INCREASE)
         self.color = BALL_COLOR
 
         # Create pygame rect for collision detection
         self.rect = pygame.Rect(0, 0, self.size, self.size)
+        
+        # Initialize position and velocity
+        self.x = 0.0
+        self.y = 0.0
+        self.dx = 0.0
+        self.dy = 0.0
+        
+        # Reset to starting position
         self.reset()
 
     def _normalize_velocity(self) -> None:
@@ -54,11 +62,11 @@ class Ball:
     def reset(self) -> None:
         """Reset ball to center with random direction."""
         # Position ball in center
-        self.x = WINDOW_WIDTH / 2 - self.size / 2
-        self.y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (self.size / 2)
+        self.x = float(WINDOW_WIDTH / 2 - self.size / 2)
+        self.y = float(GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (self.size / 2))
 
         # Reset speed
-        self.speed = BALL_SPEED
+        self.speed = float(BALL_SPEED)
 
         # Set random angle between -45 and 45 degrees
         angle = math.radians(random.uniform(-45, 45))
@@ -105,19 +113,19 @@ class Ball:
         self.rect.y = int(self.y)
 
         # Check wall collisions
-        if self.y <= GAME_AREA_TOP:
-            self.y = GAME_AREA_TOP
+        if self.y <= float(GAME_AREA_TOP):
+            self.y = float(GAME_AREA_TOP)
             self.dy = abs(self.dy)  # Bounce down
-        elif self.y + self.size >= GAME_AREA_TOP + GAME_AREA_HEIGHT:
-            self.y = GAME_AREA_TOP + GAME_AREA_HEIGHT - self.size
+        elif self.y + self.size >= float(GAME_AREA_TOP + GAME_AREA_HEIGHT):
+            self.y = float(GAME_AREA_TOP + GAME_AREA_HEIGHT - self.size)
             self.dy = -abs(self.dy)  # Bounce up
 
         # Check scoring
         if self.x <= 0:
-            self.x = 0  # Ensure ball stops at boundary
+            self.x = 0.0  # Ensure ball stops at boundary
             return "p2_scored"
-        elif self.x + self.size >= WINDOW_WIDTH:
-            self.x = WINDOW_WIDTH - self.size  # Ensure ball stops at boundary
+        elif self.x + self.size >= float(WINDOW_WIDTH):
+            self.x = float(WINDOW_WIDTH - self.size)  # Ensure ball stops at boundary
             return "p1_scored"
 
         # Check paddle collisions

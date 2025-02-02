@@ -2,101 +2,90 @@
 
 This module contains the GameScore class that handles:
 - Score tracking
-- Game over conditions
-- Winner determination
+- Score display
+- Win condition checking
 """
 
-import logging
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
-from .player import HumanPlayer, AIPlayer
+import pygame
+
+from .constants import (
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    SCORE_OFFSET,
+    SCORE_COLOR,
+    FONT_SIZE,
+)
 
 
 class GameScore:
-    """Handles game scoring and win conditions."""
+    """Handles game scoring and display."""
 
-    def __init__(self, points_to_win: int = 11, win_by_two: bool = True) -> None:
-        """Initialize the scoring system.
-
-        Args:
-            points_to_win: Number of points needed to win (default: 11)
-            win_by_two: Whether player needs to win by 2 points (default: True)
-        """
-        self.logger = logging.getLogger(__name__)
-        self.points_to_win = points_to_win
-        self.win_by_two = win_by_two
+    def __init__(self) -> None:
+        """Initialize the scoring system."""
         self.scores = [0, 0]  # [left_score, right_score]
-        self.hits = [0, 0]  # [left_hits, right_hits]
-        self.game_over = False
-        self.winner: Optional[str] = None
+        self.font: Optional[pygame.font.Font] = None
 
     def reset(self) -> None:
-        """Reset the hits counter for a new point."""
-        self.hits = [0, 0]
+        """Reset scores to zero."""
+        self.scores = [0, 0]
 
-    def track_hits(self, left_hit: bool, right_hit: bool) -> None:
-        """Track paddle hits for the current point/rally."""
-        if left_hit:
-            self.hits[0] += 1
-        if right_hit:
-            self.hits[1] += 1
-
-    def handle_score(
-        self, player1: HumanPlayer | AIPlayer, player2: HumanPlayer | AIPlayer, result: str
-    ) -> None:
-        """Handle scoring based on game result.
+    def increment_score(self, is_left_player: bool) -> None:
+        """Increment score for the specified player.
 
         Args:
-            player1: Left player
-            player2: Right player
-            result: Game result ("p1_scored" or "p2_scored")
+            is_left_player: Whether to increment left player's score
         """
-        if result == "p1_scored":
+        if is_left_player:
             self.scores[0] += 1
-            player1.increment_score()
-            self.logger.info(
-                "Player 1 scored! Score: %d-%d (hits: %d-%d)",
-                self.scores[0],
-                self.scores[1],
-                self.hits[0],
-                self.hits[1],
-            )
-        elif result == "p2_scored":
+        else:
             self.scores[1] += 1
-            player2.increment_score()
-            self.logger.info(
-                "Player 2 scored! Score: %d-%d (hits: %d-%d)",
-                self.scores[0],
-                self.scores[1],
-                self.hits[0],
-                self.hits[1],
-            )
 
-    def check_winner(self, player1: HumanPlayer | AIPlayer, player2: HumanPlayer | AIPlayer) -> None:
-        """Check if there's a winner based on current scores.
-
-        Args:
-            player1: Left player
-            player2: Right player
-        """
-        # Get current scores
-        p1_score = self.scores[0]
-        p2_score = self.scores[1]
-
-        # Check if either player has reached minimum points to win
-        if p1_score >= self.points_to_win or p2_score >= self.points_to_win:
-            # If win by two is required, check point difference
-            if not self.win_by_two or abs(p1_score - p2_score) >= 2:
-                self.game_over = True
-                if p1_score > p2_score:
-                    self.winner = "Player 1"
-                else:
-                    self.winner = "Player 2"
-
-    def get_scores(self) -> Tuple[int, int]:
+    def get_scores(self) -> List[int]:
         """Get current scores.
 
         Returns:
-            Tuple of (left_score, right_score)
+            List of [left_score, right_score]
         """
-        return tuple(self.scores)  # type: ignore 
+        return self.scores.copy()
+
+    def draw(
+        self,
+        screen: pygame.Surface,
+        font: Optional[pygame.font.Font] = None,
+    ) -> None:
+        """Draw scores on screen.
+
+        Args:
+            screen: Surface to draw on
+            font: Font to use for rendering (optional)
+        """
+        # Use provided font or create a new one
+        if font:
+            self.font = font
+        elif not self.font:
+            self.font = pygame.font.Font(None, FONT_SIZE)
+
+        # Create score text
+        score_text = f"{self.scores[0]}  {self.scores[1]}"
+        text_surface = self.font.render(score_text, True, SCORE_COLOR)
+        text_rect = text_surface.get_rect(
+            centerx=WINDOW_WIDTH // 2,
+            top=SCORE_OFFSET,
+        )
+
+        # Draw score
+        screen.blit(text_surface, text_rect)
+
+    def check_winner(self) -> Optional[int]:
+        """Check if there's a winner.
+
+        Returns:
+            0 for left player win, 1 for right player win, None if no winner
+        """
+        if self.scores[0] >= 11 and self.scores[0] - self.scores[1] >= 2:
+            return 0
+        if self.scores[1] >= 11 and self.scores[1] - self.scores[0] >= 2:
+            return 1
+        return None 
