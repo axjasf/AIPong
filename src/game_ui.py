@@ -7,7 +7,7 @@ This module contains the GameUI class that handles:
 """
 
 import pygame
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 from .constants import (
     WINDOW_WIDTH,

@@ -17,8 +17,7 @@ from src.constants import (
 def game_ui():
     """Fixture for game UI instance."""
     pygame.init()
-    screen = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-    ui = GameUI(screen)
+    ui = GameUI(headless=False)
     yield ui
     pygame.quit()
 
@@ -65,18 +64,14 @@ def test_draw_winner(mock_render, game_ui):
 
 def test_screen_update(game_ui):
     """Test screen update integration."""
-    # Create a test surface
-    test_surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-    game_ui.screen = test_surface
-    
     # Get initial pixel at score position
-    initial_pixel = test_surface.get_at((WINDOW_WIDTH // 2, 30))
+    initial_pixel = game_ui.screen.get_at((WINDOW_WIDTH // 2, 30))
     
     # Draw scores
     game_ui.draw_scores(1, 1)
     
     # Get pixel after rendering
-    final_pixel = test_surface.get_at((WINDOW_WIDTH // 2, 30))
+    final_pixel = game_ui.screen.get_at((WINDOW_WIDTH // 2, 30))
     
     # Pixels should be different after rendering
     assert initial_pixel != final_pixel 
