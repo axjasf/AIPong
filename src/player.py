@@ -9,9 +9,10 @@ This module contains the base Player class and its implementations:
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 import pygame
 
 from .paddle import Paddle
@@ -87,25 +88,27 @@ class AIPlayer(Player):
             self.weights = np.random.randn(total_inputs, num_nodes) * np.sqrt(2.0 / total_inputs)
 
         # Training data for learning
-        self.last_state: Optional[np.ndarray] = None
+        self.last_state: Optional[NDArray[np.float64]] = None
         self.last_action: Optional[bool] = None
         self.last_probability: Optional[float] = None
 
-        # Load or initialize training statistics
+        # Initialize training statistics
+        self.games_played: int = 0
+        self.total_reward: float = 0
+
+        # Load statistics if available
         if os.path.exists(self.stats_file):
             with open(self.stats_file, "r", encoding="utf-8") as f:
                 stats = json.load(f)
-                self.games_played = stats["games_played"]
-                self.total_reward = stats["total_reward"]
-        else:
-            self.games_played: int = 0
-            self.total_reward: float = 0
+                # Update without type annotations since they're already defined
+                self.games_played = int(stats["games_played"])  # Ensure type safety
+                self.total_reward = float(stats["total_reward"])  # Ensure type safety
 
-    def _sigmoid(self, x: np.ndarray) -> np.ndarray:
+    def _sigmoid(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         """Apply sigmoid activation function."""
         return 1 / (1 + np.exp(-x))
 
-    def decide_move(self, state: np.ndarray) -> tuple[bool, float]:
+    def decide_move(self, state: NDArray[np.float64]) -> Tuple[bool, float]:
         """Decide whether to move up or down based on current state."""
         # Flatten the state matrix
         flat_state = state.flatten()
