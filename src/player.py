@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 import json
 import logging
 import os
+import random
 from typing import Optional, Tuple
 
 import numpy as np
@@ -98,6 +99,8 @@ class ComputerPlayer(Player):
 
     # Deadzone in pixels to prevent paddle jitter
     MOVEMENT_DEADZONE = 10
+    # Maximum reaction delay in milliseconds
+    MAX_REACTION_DELAY = 50
 
     def __init__(self, paddle: Paddle) -> None:
         """Initialize the computer player.
@@ -108,6 +111,11 @@ class ComputerPlayer(Player):
         super().__init__(paddle)
         self.ball: Optional[Ball] = None
         self.last_ball_y: float = 0.0
+        
+        # Initialize random reaction delay (0-50ms)
+        self.reaction_delay = random.randint(0, self.MAX_REACTION_DELAY)
+        self.last_update_time = 0
+        self.logger.info("Computer player initialized with %dms reaction delay", self.reaction_delay)
 
     def set_ball(self, ball: Ball) -> None:
         """Set the ball reference for the computer player.
@@ -127,6 +135,12 @@ class ComputerPlayer(Player):
         """
         if not self.ball:
             return
+
+        # Check if enough time has passed since last update
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update_time < self.reaction_delay:
+            return
+        self.last_update_time = current_time
 
         # Calculate centers for comparison
         paddle_center = self.paddle.get_y() + (PADDLE_HEIGHT / 2)
