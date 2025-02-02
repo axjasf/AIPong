@@ -1,64 +1,57 @@
-"""Pong Game Paddle Class.
-
-This module contains the Paddle class that handles:
-- Paddle movement within game boundaries
-- Paddle rendering
-- Movement speed and constraints
-"""
+"""Paddle class for Pong game."""
 
 import pygame
-from typing import Optional
-from .constants import (
-    WINDOW_WIDTH, WINDOW_HEIGHT,
-    GAME_AREA_TOP, GAME_AREA_HEIGHT,
-    PADDLE_WIDTH, PADDLE_HEIGHT,
-    PADDLE_SPEED, PADDLE_COLOR
-)
+from .constants import PADDLE_WIDTH, PADDLE_HEIGHT, WHITE, PADDLE_SPEED
+
 
 class Paddle:
-    """Represents a paddle with position and movement controls."""
-    
-    def __init__(self, x: int, y: int, min_y: int, max_y: int, grid_height: int = 30) -> None:
-        """Initialize the paddle with starting position and movement bounds."""
-        # Store grid coordinates
-        self.grid_height = grid_height
-        self.y_scale = grid_height / GAME_AREA_HEIGHT
-        
-        # Convert screen coordinates to grid coordinates
-        self.grid_y = int((y - GAME_AREA_TOP) * self.y_scale)
-        self.min_grid_y = int((min_y - GAME_AREA_TOP) * self.y_scale)
-        self.max_grid_y = int((max_y - GAME_AREA_TOP - PADDLE_HEIGHT) * self.y_scale)
-        
-        # Keep screen x for rendering
+    """Represents a paddle in the game."""
+
+    def __init__(self, x: int, y: int, min_y: int, max_y: int) -> None:
+        """Initialize the paddle.
+
+        Args:
+            x: X position of paddle
+            y: Y position of paddle
+            min_y: Minimum Y position (top boundary)
+            max_y: Maximum Y position (bottom boundary)
+        """
         self.x = x
-        
-        # Create rect for rendering and collision
+        self.y = y
+        self.min_y = min_y
+        self.max_y = max_y - PADDLE_HEIGHT
         self.rect = pygame.Rect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT)
-        self._update_rect()
-    
-    def _update_rect(self) -> None:
-        """Update the pygame rect based on grid position."""
-        # Convert grid coordinates back to screen coordinates for rendering
-        screen_y = (self.grid_y / self.y_scale) + GAME_AREA_TOP
-        self.rect.y = int(screen_y)
-    
-    def move(self, up: bool = False) -> None:
-        """Move the paddle up or down within grid bounds."""
-        if up and self.grid_y > self.min_grid_y:
-            self.grid_y = max(self.min_grid_y, self.grid_y - 1)
-        elif not up and self.grid_y < self.max_grid_y:
-            self.grid_y = min(self.max_grid_y, self.grid_y + 1)
-        self._update_rect()
-    
+
+    def move(self, up: bool) -> None:
+        """Move the paddle up or down.
+
+        Args:
+            up: True to move up, False to move down
+        """
+        if up and self.y > self.min_y:
+            self.y -= PADDLE_SPEED
+        elif not up and self.y < self.max_y:
+            self.y += PADDLE_SPEED
+
+        self.rect.y = int(self.y)
+
+    def get_y(self) -> float:
+        """Get the current Y position."""
+        return self.y
+
+    def set_y(self, y: float) -> None:
+        """Set the Y position.
+
+        Args:
+            y: New Y position
+        """
+        self.y = max(self.min_y, min(y, self.max_y))
+        self.rect.y = int(self.y)
+
     def draw(self, screen: pygame.Surface) -> None:
-        """Draw the paddle on the screen."""
-        pygame.draw.rect(screen, PADDLE_COLOR, self.rect)
-    
-    def get_y(self) -> int:
-        """Get screen y coordinate."""
-        return self.rect.y
-    
-    def set_y(self, screen_y: int) -> None:
-        """Set screen y coordinate and update grid position."""
-        self.grid_y = int((screen_y - GAME_AREA_TOP) * self.y_scale)
-        self._update_rect() 
+        """Draw the paddle on the screen.
+
+        Args:
+            screen: Pygame surface to draw on
+        """
+        pygame.draw.rect(screen, WHITE, self.rect)

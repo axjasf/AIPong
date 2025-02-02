@@ -63,4 +63,4 @@ P1_DOWN_KEY = pygame.K_s
 
 # Player 2 (Right paddle)
 P2_UP_KEY = pygame.K_UP
-P2_DOWN_KEY = pygame.K_DOWN 
+P2_DOWN_KEY = pygame.K_DOWN

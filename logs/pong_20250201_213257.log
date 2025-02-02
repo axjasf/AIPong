@@ -1,0 +1,7 @@
+2025-02-01 21:32:57,617 - src.game - INFO - Initializing game with players: HumanPlayer vs HumanPlayer
+2025-02-01 21:32:58,998 - src.game - DEBUG - Game state initialized
+2025-02-01 21:32:59,001 - src.game - INFO - Players initialized successfully
+2025-02-01 21:33:01,626 - src.game - INFO - Player 1 scored. Score: 1-0
+2025-02-01 21:33:02,629 - src.game - DEBUG - Resetting ball position
+2025-02-01 21:33:12,909 - src.game - INFO - Player 2 scored. Score: 1-1
+2025-02-01 21:33:13,911 - src.game - DEBUG - Resetting ball position
