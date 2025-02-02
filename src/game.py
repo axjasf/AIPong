@@ -19,6 +19,7 @@ from .constants import (
     WINDOW_HEIGHT,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
+    GAME_AREA_WIDTH,
     # Colors
     BLACK,
     WHITE,
@@ -42,6 +43,9 @@ from .constants import (
     LEFT_PADDLE_X,
     RIGHT_PADDLE_X,
     PADDLE_HEIGHT,
+    PADDLE_WIDTH,
+    PADDLE_MARGIN,
+    BALL_SIZE,
 )
 from .paddle import Paddle
 from .ball import Ball
@@ -86,17 +90,7 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
 
         # Create game objects in the game area
-        ball_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
-        self.ball: Ball = Ball(WINDOW_WIDTH // 2, ball_y)
-
-        # Create paddles
-        paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
-        left_paddle = Paddle(
-            LEFT_PADDLE_X, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT
-        )
-        right_paddle = Paddle(
-            RIGHT_PADDLE_X, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT
-        )
+        self._init_game_objects()
 
         # Initialize game state for AI
         self.game_state = GameState()
@@ -107,20 +101,20 @@ class Game:
         self.player2: Union[HumanPlayer, AIPlayer]
 
         if player1_type == HumanPlayer and not headless:
-            self.player1 = HumanPlayer(left_paddle, P1_UP_KEY, P1_DOWN_KEY)
+            self.player1 = HumanPlayer(self.paddle_p1, P1_UP_KEY, P1_DOWN_KEY)
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player1_type, AIPlayer):
                 raise TypeError("Non-headless mode requires HumanPlayer or AIPlayer")
-            self.player1 = player1_type(left_paddle, self.game_state)
+            self.player1 = player1_type(self.paddle_p1, self.game_state)
 
         if player2_type == HumanPlayer and not headless:
-            self.player2 = HumanPlayer(right_paddle, P2_UP_KEY, P2_DOWN_KEY)
+            self.player2 = HumanPlayer(self.paddle_p2, P2_UP_KEY, P2_DOWN_KEY)
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player2_type, AIPlayer):
                 raise TypeError("Non-headless mode requires HumanPlayer or AIPlayer")
-            self.player2 = player2_type(right_paddle, self.game_state)
+            self.player2 = player2_type(self.paddle_p2, self.game_state)
 
         self.paddles: List[Paddle] = [self.player1.paddle, self.player2.paddle]
 
@@ -156,6 +150,17 @@ class Game:
         self.right_hits_this_point = 0
 
         self.logger.info("Players initialized successfully")
+
+    def _init_game_objects(self) -> None:
+        """Initialize game objects (paddles and ball)."""
+        # Initialize paddles
+        paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
+        self.paddle_p1 = Paddle(PADDLE_MARGIN, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
+        self.paddle_p2 = Paddle(WINDOW_WIDTH - PADDLE_MARGIN - PADDLE_WIDTH, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
+        
+        # Initialize ball in center
+        ball_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - BALL_SIZE) // 2
+        self.ball: Ball = Ball(GAME_AREA_WIDTH // 2, ball_y)
 
     def handle_input(self) -> None:
         """Handle keyboard input for game control."""
