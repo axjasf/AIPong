@@ -15,6 +15,8 @@ def print_usage():
     print("  record-human  : Two human players with gameplay recording")
     print("  human-ai     : Human vs AI")
     print("  human-comp   : Human vs Computer")
+    print("  comp-comp    : Computer vs Computer")
+    print("  comp-ai      : Computer vs AI")
     print("  ai-ai        : AI vs AI")
     print("\nOptions:")
     print("  --train N    : Train for N games in headless mode")
@@ -51,7 +53,7 @@ def main():
                 os.remove("ai_stats.json")
         elif arg == "--learn":
             learn_from_humans = True
-        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "comp-comp", "ai-ai"]:
+        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "comp-comp", "comp-ai", "ai-ai"]:
             mode = arg.lower()
         else:
             print(f"Unknown argument: {arg}")
@@ -78,6 +80,8 @@ def main():
         game = Game(HumanPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
     elif mode == "comp-comp":
         game = Game(ComputerPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+    elif mode == "comp-ai":
+        game = Game(ComputerPlayer, AIPlayer, headless=headless, record_gameplay=False)
     elif mode == "ai-ai":
         game = Game(AIPlayer, AIPlayer, headless=headless, record_gameplay=False)
     else:
