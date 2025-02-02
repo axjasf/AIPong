@@ -7,7 +7,7 @@ from datetime import datetime
 from .game import Game
 from .ball import Ball
 from .paddle import Paddle
-from .player import HumanPlayer, SimpleAIPlayer, ComputerPlayer
+from .player import HumanPlayer, ComputerPlayer
 from .game_state import GameState
 
 # Create logs directory if it doesn't exist
@@ -75,7 +75,6 @@ logger = setup_logging()
 __all__ = [
     'Game',
     'HumanPlayer',
-    'SimpleAIPlayer',
     'ComputerPlayer',
     'GameState',
 ]

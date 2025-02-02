@@ -2,8 +2,10 @@
 
 import sys
 import os
+from typing import Optional, Literal
+
 from src.game import Game
-from src.player import HumanPlayer, SimpleAIPlayer, ComputerPlayer
+from src.player import HumanPlayer, ComputerPlayer
 from src.game_state import GameState
 from src import setup_logging
 
@@ -13,16 +15,29 @@ def print_usage():
     print("Usage: python main.py [mode] [options]")
     print("Available modes:")
     print("  human-human   : Two human players")
-    print("  human-ai     : Human vs AI")
     print("  human-comp   : Human vs Computer")
     print("  comp-comp    : Computer vs Computer")
-    print("  comp-ai      : Computer vs AI")
-    print("  ai-ai        : AI vs AI")
     print("\nOptions:")
-    print("  --train N    : Train for N games in headless mode")
-    print("  --speed      : Run AI games at maximum speed")
-    print("  --fresh      : Start with fresh AI (ignore saved weights)")
+    print("  --speed      : Run games at maximum speed")
     print("  --minimal    : Minimal logging (good for overnight runs)")
+    print("  --easy       : Easy computer opponent (50-200ms reaction)")
+    print("  --normal     : Normal computer opponent (30-50ms reaction)")
+    print("  --hard       : Hard computer opponent (0-30ms reaction)")
+
+
+def create_computer_player(paddle, difficulty: Optional[str] = None) -> ComputerPlayer:
+    """Create a computer player with the specified difficulty.
+    
+    Args:
+        paddle: The paddle for the player
+        difficulty: Optional difficulty setting
+        
+    Returns:
+        ComputerPlayer instance
+    """
+    if difficulty in ["easy", "normal", "hard"]:
+        return ComputerPlayer(paddle, difficulty=difficulty)
+    return ComputerPlayer(paddle, difficulty="normal")
 
 
 def main():
@@ -30,28 +45,24 @@ def main():
     # Parse game mode and options
     mode = "human-human"  # default mode
     headless = False
-    max_games = None
-    fresh_start = False
     minimal_logging = False
+    difficulty: Optional[str] = None
 
     args = sys.argv[1:]
     i = 0
     while i < len(args):
         arg = args[i]
-        if arg == "--train":
+        if arg == "--speed":
             headless = True
-            i += 1
-            if i < len(args):
-                max_games = int(args[i])
-        elif arg == "--speed":
-            headless = True
-        elif arg == "--fresh":
-            fresh_start = True
-            if os.path.exists("ai_weights.npy"):
-                os.remove("ai_weights.npy")
         elif arg == "--minimal":
             minimal_logging = True
-        elif arg.lower() in ["human-human", "human-ai", "human-comp", "comp-comp", "comp-ai", "ai-ai"]:
+        elif arg == "--easy":
+            difficulty = "easy"
+        elif arg == "--normal":
+            difficulty = "normal"
+        elif arg == "--hard":
+            difficulty = "hard"
+        elif arg.lower() in ["human-human", "human-comp", "comp-comp"]:
             mode = arg.lower()
         else:
             print(f"Unknown argument: {arg}")
@@ -65,26 +76,25 @@ def main():
     # Set up player types based on mode
     if mode == "human-human":
         game = Game(HumanPlayer, HumanPlayer, headless=headless)
-    elif mode == "human-ai":
-        game = Game(HumanPlayer, SimpleAIPlayer, headless=headless)
     elif mode == "human-comp":
         game = Game(HumanPlayer, ComputerPlayer, headless=headless)
+        # Set difficulty for computer player after initialization
+        if isinstance(game.player2, ComputerPlayer):
+            game.player2.reaction_delay = game.player2.DELAY_RANGES[difficulty or "normal"][0]
     elif mode == "comp-comp":
         game = Game(ComputerPlayer, ComputerPlayer, headless=headless)
-    elif mode == "comp-ai":
-        game = Game(ComputerPlayer, SimpleAIPlayer, headless=headless)
-    elif mode == "ai-ai":
-        game = Game(SimpleAIPlayer, SimpleAIPlayer, headless=headless)
+        # Set difficulty for both computer players
+        if isinstance(game.player1, ComputerPlayer):
+            game.player1.reaction_delay = game.player1.DELAY_RANGES[difficulty or "normal"][0]
+        if isinstance(game.player2, ComputerPlayer):
+            game.player2.reaction_delay = game.player2.DELAY_RANGES[difficulty or "normal"][0]
     else:
         print(f"Unknown mode: {mode}")
         print_usage()
         return
 
     # Run the game
-    if max_games is not None:
-        game.run(max_games=max_games)
-    else:
-        game.run()
+    game.run()
 
 
 if __name__ == "__main__":

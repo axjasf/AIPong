@@ -11,7 +11,7 @@ import json
 import logging
 import os
 import random
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Literal
 
 import numpy as np
 import pygame
@@ -99,23 +99,34 @@ class ComputerPlayer(Player):
 
     # Deadzone in pixels to prevent paddle jitter
     MOVEMENT_DEADZONE = 10
-    # Maximum reaction delay in milliseconds
-    MAX_REACTION_DELAY = 50
 
-    def __init__(self, paddle: Paddle) -> None:
+    # Reaction delay ranges for different difficulties (in milliseconds)
+    DELAY_RANGES = {
+        "easy": (50, 200),    # Slower reactions
+        "normal": (30, 50),   # Medium reactions
+        "hard": (0, 30)       # Fast reactions
+    }
+
+    def __init__(self, paddle: Paddle, difficulty: Literal["easy", "normal", "hard"] = "normal") -> None:
         """Initialize the computer player.
 
         Args:
             paddle: The player's paddle
+            difficulty: Difficulty setting affecting reaction time
         """
         super().__init__(paddle)
         self.ball: Optional[Ball] = None
         self.last_ball_y: float = 0.0
         
-        # Initialize random reaction delay (0-50ms)
-        self.reaction_delay = random.randint(0, self.MAX_REACTION_DELAY)
+        # Set reaction delay based on difficulty
+        min_delay, max_delay = self.DELAY_RANGES[difficulty]
+        self.reaction_delay = random.randint(min_delay, max_delay)
         self.last_update_time = 0
-        self.logger.info("Computer player initialized with %dms reaction delay", self.reaction_delay)
+        self.logger.info(
+            "Computer player initialized with %dms reaction delay (%s mode)", 
+            self.reaction_delay, 
+            difficulty
+        )
 
     def set_ball(self, ball: Ball) -> None:
         """Set the ball reference for the computer player.
