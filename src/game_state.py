@@ -36,6 +36,10 @@ class GameState:
         self.ball_passed_paddle: bool = False
         self.ball_hit_paddle: bool = False
         
+        # Initialize hit tracking
+        self.left_hits: int = 0
+        self.right_hits: int = 0
+        
         # Initialize matrices
         self.current_matrix = np.zeros((grid_height, grid_width))
         self.previous_matrix = np.zeros((grid_height, grid_width))

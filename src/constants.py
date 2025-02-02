@@ -23,7 +23,7 @@ GAME_AREA_HEIGHT = WINDOW_HEIGHT - HEADER_HEIGHT
 # Paddle settings
 PADDLE_WIDTH = 15
 PADDLE_HEIGHT = 90
-PADDLE_SPEED = 5
+PADDLE_SPEED = 4
 PADDLE_MARGIN = 50  # Distance from screen edges
 
 # Ball settings

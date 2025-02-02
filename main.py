@@ -3,7 +3,7 @@
 import sys
 import os
 from src.game import Game
-from src.player import HumanPlayer, AIPlayer
+from src.player import HumanPlayer, AIPlayer, ComputerPlayer
 from src.game_state import GameState
 
 def print_usage():
@@ -14,6 +14,9 @@ def print_usage():
     print("  record-human : Two human players with gameplay recording")
     print("  human-ai    : Human vs AI")
     print("  ai-ai       : AI vs AI")
+    print("  human-cp    : Human vs Computer")
+    print("  ai-cp       : AI vs Computer")
+    print("  cp-cp       : Computer vs Computer")
     print("\nOptions:")
     print("  --train N   : Train for N games in headless mode")
     print("  --speed     : Run AI games at maximum speed")
@@ -43,15 +46,18 @@ def main():
         elif arg == "--fresh":
             fresh_start = True
             if os.path.exists("ai_weights.npy"):
-                os.remove("ai_weights.npy")
+                os.remove("ai_weights_file")
             if os.path.exists("ai_stats.json"):
                 os.remove("ai_stats.json")
         elif arg == "--learn":
             learn_from_humans = True
-        elif arg.lower() in ["human-human", "record-human", "human-ai", "ai-ai"]:
+        elif arg.lower() in ["human-human", "record-human", "human-ai", "ai-ai",
+                           "human-cp", "ai-cp", "cp-cp"]:
             mode = arg.lower()
+            print(f"Setting mode to: {mode}")  # Debug print
         else:
             print(f"Unknown argument: {arg}")
+            print(f"Valid modes: human-human, record-human, human-ai, ai-ai, human-cp, ai-cp, cp-cp")
             print_usage()
             return
         i += 1
@@ -70,9 +76,15 @@ def main():
     elif mode == "record-human":
         game = Game(HumanPlayer, HumanPlayer, headless=headless, record_gameplay=True)
     elif mode == "human-ai":
-        game = Game(HumanPlayer, AIPlayer, headless=headless, record_gameplay=False)
+        game = Game(HumanPlayer, AIPlayer, headless=headless, record_gameplay=True)
     elif mode == "ai-ai":
         game = Game(AIPlayer, AIPlayer, headless=headless, record_gameplay=False)
+    elif mode == "human-cp":
+        game = Game(HumanPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+    elif mode == "ai-cp":
+        game = Game(AIPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+    elif mode == "cp-cp":
+        game = Game(ComputerPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
     else:
         print(f"Unknown mode: {mode}")
         print_usage()

@@ -170,8 +170,8 @@ class Game:
         
         # Reset paddle positions to middle
         paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
-        self.player1.paddle.y = paddle_y
-        self.player2.paddle.y = paddle_y
+        self.player1.paddle.set_y(paddle_y)
+        self.player2.paddle.set_y(paddle_y)
         
         self.games_completed += 1
         
@@ -208,21 +208,21 @@ class Game:
                 self.right_hits_this_point = 0
                 # Reset paddle positions to middle
                 paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
-                self.player1.paddle.y = paddle_y
-                self.player2.paddle.y = paddle_y
+                self.player1.paddle.set_y(paddle_y)
+                self.player2.paddle.set_y(paddle_y)
                 # Start recording a new point/rally
                 if self.recorder:
                     self.recorder.end_game()  # End previous point
                     self.recorder.start_game()  # Start new point
         else:
             # Get previous paddle positions for movement detection
-            prev_left_y = self.player1.paddle.y
-            prev_right_y = self.player2.paddle.y
+            prev_left_y = self.player1.paddle.get_y()
+            prev_right_y = self.player2.paddle.get_y()
             
             # Update game state matrix
             state = self.game_state.update(
                 self.ball.x, self.ball.y,
-                self.player1.paddle.y, self.player2.paddle.y
+                self.player1.paddle.get_y(), self.player2.paddle.get_y()
             )
             
             # Update player paddles
@@ -232,12 +232,12 @@ class Game:
             
             # Detect paddle movements
             left_moved_up = None
-            if self.player1.paddle.y != prev_left_y:
-                left_moved_up = self.player1.paddle.y < prev_left_y
+            if self.player1.paddle.get_y() != prev_left_y:
+                left_moved_up = self.player1.paddle.get_y() < prev_left_y
                 
             right_moved_up = None
-            if self.player2.paddle.y != prev_right_y:
-                right_moved_up = self.player2.paddle.y < prev_right_y
+            if self.player2.paddle.get_y() != prev_right_y:
+                right_moved_up = self.player2.paddle.get_y() < prev_right_y
             
             # Update ball and check for scoring
             result = self.ball.move(self.paddles)
@@ -248,8 +248,10 @@ class Game:
             
             if left_hit_ball:
                 self.left_hits_this_point += 1
+                self.game_state.left_hits = self.left_hits_this_point
             if right_hit_ball:
                 self.right_hits_this_point += 1
+                self.game_state.right_hits = self.right_hits_this_point
             
             if result == "p1_scored":
                 if self.recorder:
@@ -272,7 +274,7 @@ class Game:
             if self.recorder:
                 self.recorder.update_frame(
                     state, self.ball.x, self.ball.y,
-                    self.player1.paddle.y, self.player2.paddle.y,
+                    self.player1.paddle.get_y(), self.player2.paddle.get_y(),
                     left_moved_up, right_moved_up,
                     left_hit_ball, right_hit_ball
                 )
