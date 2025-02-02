@@ -3,22 +3,23 @@
 import sys
 import os
 from src.game import Game
-from src.player import HumanPlayer, AIPlayer
+from src.player import HumanPlayer, AIPlayer, ComputerPlayer
 from src.game_state import GameState
 
 def print_usage():
     """Print usage instructions."""
     print("Usage: python main.py [mode] [options]")
     print("Available modes:")
-    print("  human-human  : Two human players")
-    print("  record-human : Two human players with gameplay recording")
-    print("  human-ai    : Human vs AI")
-    print("  ai-ai       : AI vs AI")
+    print("  human-human   : Two human players")
+    print("  record-human  : Two human players with gameplay recording")
+    print("  human-ai     : Human vs AI")
+    print("  human-comp   : Human vs Computer")
+    print("  ai-ai        : AI vs AI")
     print("\nOptions:")
-    print("  --train N   : Train for N games in headless mode")
-    print("  --speed     : Run AI games at maximum speed")
-    print("  --fresh     : Start with fresh AI (ignore saved state)")
-    print("  --learn     : Learn from recorded human games before starting")
+    print("  --train N    : Train for N games in headless mode")
+    print("  --speed      : Run AI games at maximum speed")
+    print("  --fresh      : Start with fresh AI (ignore saved state)")
+    print("  --learn      : Learn from recorded human games before starting")
 
 def main():
     """Start and run the game."""
@@ -48,7 +49,7 @@ def main():
                 os.remove("ai_stats.json")
         elif arg == "--learn":
             learn_from_humans = True
-        elif arg.lower() in ["human-human", "record-human", "human-ai", "ai-ai"]:
+        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "ai-ai"]:
             mode = arg.lower()
         else:
             print(f"Unknown argument: {arg}")
@@ -71,6 +72,8 @@ def main():
         game = Game(HumanPlayer, HumanPlayer, headless=headless, record_gameplay=True)
     elif mode == "human-ai":
         game = Game(HumanPlayer, AIPlayer, headless=headless, record_gameplay=True)
+    elif mode == "human-comp":
+        game = Game(HumanPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
     elif mode == "ai-ai":
         game = Game(AIPlayer, AIPlayer, headless=headless, record_gameplay=False)
     else:

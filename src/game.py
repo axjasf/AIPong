@@ -102,6 +102,7 @@ class Game:
             self.player1 = HumanPlayer(self.paddle_p1, P1_UP_KEY, P1_DOWN_KEY)
         elif player1_type == ComputerPlayer:
             self.player1 = ComputerPlayer(self.paddle_p1)
+            self.player1.ball = self.ball  # Pass ball reference
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player1_type, AIPlayer):
@@ -112,6 +113,7 @@ class Game:
             self.player2 = HumanPlayer(self.paddle_p2, P2_UP_KEY, P2_DOWN_KEY)
         elif player2_type == ComputerPlayer:
             self.player2 = ComputerPlayer(self.paddle_p2)
+            self.player2.ball = self.ball  # Pass ball reference
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player2_type, AIPlayer):
@@ -212,6 +214,14 @@ class Game:
         paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
         self.player1.paddle.set_y(paddle_y)
         self.player2.paddle.set_y(paddle_y)
+
+        # Update ball reference for computer players
+        if isinstance(self.player1, ComputerPlayer):
+            self.player1.ball = self.ball
+            self.player1.last_ball_y = self.ball.y
+        if isinstance(self.player2, ComputerPlayer):
+            self.player2.ball = self.ball
+            self.player2.last_ball_y = self.ball.y
 
         self.games_completed += 1
 
