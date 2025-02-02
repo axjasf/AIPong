@@ -53,7 +53,7 @@ from .game_recorder import GameRecorder
 
 
 # Type variable for player types
-P = TypeVar('P', bound=Player)
+P = TypeVar("P", bound=Player)
 
 
 class Game:
@@ -75,7 +75,7 @@ class Game:
         self.headless = headless
         # Initialize screen as None first
         self.screen: Optional[pygame.Surface] = None
-        
+
         if headless:
             self.logger.debug("Running in headless mode")
             os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -106,7 +106,9 @@ class Game:
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player1_type, AIPlayer):
-                raise TypeError("Non-headless mode requires HumanPlayer, ComputerPlayer, or AIPlayer")
+                raise TypeError(
+                    "Non-headless mode requires HumanPlayer, ComputerPlayer, or AIPlayer"
+                )
             self.player1 = player1_type(self.paddle_p1, self.game_state)
 
         if player2_type == HumanPlayer and not headless:
@@ -117,7 +119,9 @@ class Game:
         else:
             # Ensure we're using AIPlayer
             if not issubclass(player2_type, AIPlayer):
-                raise TypeError("Non-headless mode requires HumanPlayer, ComputerPlayer, or AIPlayer")
+                raise TypeError(
+                    "Non-headless mode requires HumanPlayer, ComputerPlayer, or AIPlayer"
+                )
             self.player2 = player2_type(self.paddle_p2, self.game_state)
 
         self.paddles: List[Paddle] = [self.player1.paddle, self.player2.paddle]
@@ -160,8 +164,10 @@ class Game:
         # Initialize paddles
         paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
         self.paddle_p1 = Paddle(PADDLE_MARGIN, paddle_y, True)  # Left paddle
-        self.paddle_p2 = Paddle(WINDOW_WIDTH - PADDLE_MARGIN - PADDLE_WIDTH, paddle_y, False)  # Right paddle
-        
+        self.paddle_p2 = Paddle(
+            WINDOW_WIDTH - PADDLE_MARGIN - PADDLE_WIDTH, paddle_y, False
+        )  # Right paddle
+
         # Initialize ball
         self.ball = Ball()
 

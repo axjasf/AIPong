@@ -6,6 +6,7 @@ from src.game import Game
 from src.player import HumanPlayer, AIPlayer, ComputerPlayer
 from src.game_state import GameState
 
+
 def print_usage():
     """Print usage instructions."""
     print("Usage: python main.py [mode] [options]")
@@ -21,6 +22,7 @@ def print_usage():
     print("  --fresh      : Start with fresh AI (ignore saved state)")
     print("  --learn      : Learn from recorded human games before starting")
 
+
 def main():
     """Start and run the game."""
     # Parse game mode and options
@@ -29,7 +31,7 @@ def main():
     max_games = None
     fresh_start = False
     learn_from_humans = False
-    
+
     args = sys.argv[1:]
     i = 0
     while i < len(args):
@@ -49,14 +51,14 @@ def main():
                 os.remove("ai_stats.json")
         elif arg == "--learn":
             learn_from_humans = True
-        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "ai-ai"]:
+        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "comp-comp", "ai-ai"]:
             mode = arg.lower()
         else:
             print(f"Unknown argument: {arg}")
             print_usage()
             return
         i += 1
-    
+
     # Learn from human games if requested (and not starting fresh)
     if learn_from_humans and not fresh_start:
         # Create temporary AI to learn
@@ -64,7 +66,7 @@ def main():
         temp_paddle = None  # Paddle not needed for learning
         ai = AIPlayer(temp_paddle, game_state)
         ai.learn_from_human_games()
-    
+
     # Set up player types based on mode
     if mode == "human-human":
         game = Game(HumanPlayer, HumanPlayer, headless=headless, record_gameplay=False)
@@ -74,18 +76,21 @@ def main():
         game = Game(HumanPlayer, AIPlayer, headless=headless, record_gameplay=True)
     elif mode == "human-comp":
         game = Game(HumanPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+    elif mode == "comp-comp":
+        game = Game(ComputerPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
     elif mode == "ai-ai":
         game = Game(AIPlayer, AIPlayer, headless=headless, record_gameplay=False)
     else:
         print(f"Unknown mode: {mode}")
         print_usage()
         return
-    
+
     # Run the game
     if max_games is not None:
         game.run(max_games=max_games)
     else:
         game.run()
+
 
 if __name__ == "__main__":
     main()

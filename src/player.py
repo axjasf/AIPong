@@ -10,10 +10,11 @@ from abc import ABC, abstractmethod
 import json
 import logging
 import os
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 import pygame
+from numpy.typing import NDArray
 
 from .constants import (
     BALL_SIZE,
@@ -44,7 +45,7 @@ class Player(ABC):
     @abstractmethod
     def update(self) -> None:
         """Update the player's paddle position."""
-        pass
+        raise NotImplementedError
 
     def increment_score(self) -> None:
         """Increment the player's score."""
@@ -88,7 +89,15 @@ class HumanPlayer(Player):
 
 
 class ComputerPlayer(Player):
-    """Computer player that follows the ball's vertical movement."""
+    """Computer player that follows the ball's vertical movement.
+
+    This is a simple rule-based AI that attempts to track the ball's vertical position
+    by moving the paddle up or down. It includes a small deadzone to prevent jitter
+    and ensures the paddle stays within game boundaries.
+    """
+
+    # Deadzone in pixels to prevent paddle jitter
+    MOVEMENT_DEADZONE = 10
 
     def __init__(self, paddle: Paddle) -> None:
         """Initialize the computer player.
@@ -98,34 +107,47 @@ class ComputerPlayer(Player):
         """
         super().__init__(paddle)
         self.ball: Optional[Ball] = None
-        self.last_ball_y = 0.0
+        self.last_ball_y: float = 0.0
+
+    def set_ball(self, ball: Ball) -> None:
+        """Set the ball reference for the computer player.
+
+        Args:
+            ball: The game ball to track
+        """
+        self.ball = ball
+        self.last_ball_y = ball.y
 
     def update(self) -> None:
-        """Update paddle position based on ball's vertical movement."""
+        """Update paddle position based on ball's vertical movement.
+
+        The paddle will move up or down to track the ball's vertical position,
+        staying within the game area boundaries. A small deadzone prevents
+        jitter when the ball is near the paddle's center.
+        """
         if not self.ball:
             return
 
-        # Get current ball position
-        current_ball_y = self.ball.y
-
-        # Move paddle based on ball's vertical movement
+        # Calculate centers for comparison
         paddle_center = self.paddle.get_y() + (PADDLE_HEIGHT / 2)
-        ball_center = current_ball_y + (BALL_SIZE / 2)
+        ball_center = self.ball.y + (BALL_SIZE / 2)
 
-        # Move paddle towards ball
-        if ball_center > paddle_center + 10:  # Add small deadzone
-            # Ball is below paddle center - move down
-            new_y = self.paddle.get_y() + PADDLE_SPEED
-            if new_y + PADDLE_HEIGHT <= GAME_AREA_TOP + GAME_AREA_HEIGHT:
-                self.paddle.set_y(new_y)
-        elif ball_center < paddle_center - 10:  # Add small deadzone
-            # Ball is above paddle center - move up
-            new_y = self.paddle.get_y() - PADDLE_SPEED
-            if new_y >= GAME_AREA_TOP:
-                self.paddle.set_y(new_y)
+        # Only move if ball is outside the deadzone
+        if abs(ball_center - paddle_center) > self.MOVEMENT_DEADZONE:
+            # Calculate new position
+            new_y = (
+                self.paddle.get_y() - PADDLE_SPEED
+                if ball_center < paddle_center
+                else self.paddle.get_y() + PADDLE_SPEED
+            )
 
-        # Update last known ball position
-        self.last_ball_y = current_ball_y
+            # Ensure paddle stays within game area
+            new_y = max(GAME_AREA_TOP, min(new_y, GAME_AREA_TOP + GAME_AREA_HEIGHT - PADDLE_HEIGHT))
+
+            self.paddle.set_y(new_y)
+
+        # Track ball movement
+        self.last_ball_y = self.ball.y
 
 
 class AIPlayer(Player):
@@ -239,9 +261,7 @@ class AIPlayer(Player):
         # Decide and make move
         move_up, probability = self.decide_move(state)
         new_y = (
-            self.paddle.get_y() - PADDLE_SPEED
-            if move_up
-            else self.paddle.get_y() + PADDLE_SPEED
+            self.paddle.get_y() - PADDLE_SPEED if move_up else self.paddle.get_y() + PADDLE_SPEED
         )
 
         # Ensure paddle stays within game area
