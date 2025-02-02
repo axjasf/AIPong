@@ -1,20 +1,20 @@
 """Game UI handling.
 
-This module contains the GameUI class that handles all UI-related functionality:
-- Screen initialization
+This module contains the GameUI class that handles:
 - Drawing game objects
-- Rendering scores and text
+- Rendering scores
+- Displaying winner
 """
 
-from typing import List, Optional
-
 import pygame
+from typing import Optional, Tuple
 
 from .constants import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
+    GAME_AREA_WIDTH,
     BLACK,
     WHITE,
     SCORE_COLOR,
@@ -29,25 +29,18 @@ from .paddle import Paddle
 
 
 class GameUI:
-    """Handles all UI-related functionality."""
+    """Handles game UI elements."""
 
     def __init__(self, headless: bool = False) -> None:
-        """Initialize the UI system."""
+        """Initialize the game UI system."""
         self.headless = headless
-        self.screen: Optional[pygame.Surface] = None
-        self.score_font: Optional[pygame.font.Font] = None
-        self.winner_font: Optional[pygame.font.Font] = None
-
+        self.screen = None if headless else pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        
+        # Initialize fonts
         if not headless:
-            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-            pygame.display.set_caption("Pong")
+            pygame.font.init()
             self.score_font = pygame.font.Font(None, SCORE_FONT_SIZE)
             self.winner_font = pygame.font.Font(None, WINNER_FONT_SIZE)
-
-    def set_recording_mode(self) -> None:
-        """Update caption to indicate recording mode."""
-        if not self.headless:
-            pygame.display.set_caption("Pong - Recording Gameplay")
 
     def draw_winner(self, winner: Optional[str]) -> None:
         """Draw the winner announcement."""

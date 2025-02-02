@@ -49,7 +49,6 @@ from .paddle import Paddle
 from .ball import Ball
 from .player import HumanPlayer, AIPlayer, ComputerPlayer, Player
 from .game_state import GameState
-from .game_recorder import GameRecorder
 
 
 # Type variable for player types
@@ -64,7 +63,6 @@ class Game:
         player1_type: Union[Type[P], Callable[[Paddle], P]] = HumanPlayer,
         player2_type: Union[Type[P], Callable[[Paddle], P]] = HumanPlayer,
         headless: bool = False,
-        record_gameplay: bool = False,
     ) -> None:
         """Initialize the game, its objects and pygame."""
         self.logger = logging.getLogger(__name__)
@@ -159,18 +157,6 @@ class Game:
         self.games_completed: int = 0
         self.max_games: Optional[int] = None
 
-        # Game recorder (only for human games with recording enabled)
-        self.recorder = None
-        if record_gameplay:
-            self.recorder = GameRecorder()
-            self.recorder.start_game()
-            if not headless:
-                pygame.display.set_caption("Pong - Recording Gameplay")
-
-        # Track ball hits for win conditions
-        self.left_hits_this_point = 0
-        self.right_hits_this_point = 0
-
         self.logger.info("Players initialized successfully")
 
     def _init_game_objects(self) -> None:
@@ -261,18 +247,11 @@ class Game:
         if self.max_games and self.games_completed >= self.max_games:
             self.running = False
 
-        if self.recorder:
-            self.recorder.end_game()
-            self.recorder.start_game()
-
     def update(self) -> None:
         """Update game state."""
         if self.game_over:
             self.logger.info("Game over. Winner: %s", self.winner)
             self.reset_game()
-            if self.recorder:
-                self.recorder.end_game()
-                self.recorder.start_game()
             return
 
         if self.waiting_for_reset:
@@ -287,10 +266,6 @@ class Game:
                 paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
                 self.player1.paddle.set_y(paddle_y)
                 self.player2.paddle.set_y(paddle_y)
-                # Start recording a new point/rally
-                if self.recorder:
-                    self.recorder.end_game()  # End previous point
-                    self.recorder.start_game()  # Start new point
         else:
             # Get previous paddle positions for movement detection
             prev_left_y = self.player1.paddle.get_y()
@@ -330,9 +305,6 @@ class Game:
                 self.game_state.right_hits = self.right_hits_this_point
 
             if result == "p1_scored":
-                if self.recorder:
-                    # Left won by scoring, record their hits
-                    self.recorder.set_winner("left", self.left_hits_this_point)
                 self.player1.increment_score()
                 self.logger.info(
                     "Player 1 scored. Score: %d-%d", self.player1.score, self.player2.score
@@ -340,9 +312,6 @@ class Game:
                 self.waiting_for_reset = True
                 self.reset_timer = pygame.time.get_ticks()
             elif result == "p2_scored":
-                if self.recorder:
-                    # Right won by scoring, record their hits
-                    self.recorder.set_winner("right", self.right_hits_this_point)
                 self.player2.increment_score()
                 self.logger.info(
                     "Player 2 scored. Score: %d-%d", self.player1.score, self.player2.score
@@ -361,7 +330,7 @@ class Game:
                 self.winner = "Player 2"
 
             # Record frame if in human game
-            if self.recorder:
+            if not self.headless:
                 self.recorder.update_frame(
                     state,
                     self.ball.x,
