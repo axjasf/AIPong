@@ -3,8 +3,9 @@
 import sys
 import os
 from src.game import Game
-from src.player import HumanPlayer, AIPlayer, ComputerPlayer
+from src.player import HumanPlayer, SimpleAIPlayer, ComputerPlayer
 from src.game_state import GameState
+from src import setup_logging
 
 
 def print_usage():
@@ -12,7 +13,6 @@ def print_usage():
     print("Usage: python main.py [mode] [options]")
     print("Available modes:")
     print("  human-human   : Two human players")
-    print("  record-human  : Two human players with gameplay recording")
     print("  human-ai     : Human vs AI")
     print("  human-comp   : Human vs Computer")
     print("  comp-comp    : Computer vs Computer")
@@ -21,8 +21,8 @@ def print_usage():
     print("\nOptions:")
     print("  --train N    : Train for N games in headless mode")
     print("  --speed      : Run AI games at maximum speed")
-    print("  --fresh      : Start with fresh AI (ignore saved state)")
-    print("  --learn      : Learn from recorded human games before starting")
+    print("  --fresh      : Start with fresh AI (ignore saved weights)")
+    print("  --minimal    : Minimal logging (good for overnight runs)")
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     headless = False
     max_games = None
     fresh_start = False
-    learn_from_humans = False
+    minimal_logging = False
 
     args = sys.argv[1:]
     i = 0
@@ -49,11 +49,9 @@ def main():
             fresh_start = True
             if os.path.exists("ai_weights.npy"):
                 os.remove("ai_weights.npy")
-            if os.path.exists("ai_stats.json"):
-                os.remove("ai_stats.json")
-        elif arg == "--learn":
-            learn_from_humans = True
-        elif arg.lower() in ["human-human", "record-human", "human-ai", "human-comp", "comp-comp", "comp-ai", "ai-ai"]:
+        elif arg == "--minimal":
+            minimal_logging = True
+        elif arg.lower() in ["human-human", "human-ai", "human-comp", "comp-comp", "comp-ai", "ai-ai"]:
             mode = arg.lower()
         else:
             print(f"Unknown argument: {arg}")
@@ -61,29 +59,22 @@ def main():
             return
         i += 1
 
-    # Learn from human games if requested (and not starting fresh)
-    if learn_from_humans and not fresh_start:
-        # Create temporary AI to learn
-        game_state = GameState()
-        temp_paddle = None  # Paddle not needed for learning
-        ai = AIPlayer(temp_paddle, game_state)
-        ai.learn_from_human_games()
+    # Setup logging
+    setup_logging(minimal=minimal_logging)
 
     # Set up player types based on mode
     if mode == "human-human":
-        game = Game(HumanPlayer, HumanPlayer, headless=headless, record_gameplay=False)
-    elif mode == "record-human":
-        game = Game(HumanPlayer, HumanPlayer, headless=headless, record_gameplay=True)
+        game = Game(HumanPlayer, HumanPlayer, headless=headless)
     elif mode == "human-ai":
-        game = Game(HumanPlayer, AIPlayer, headless=headless, record_gameplay=True)
+        game = Game(HumanPlayer, SimpleAIPlayer, headless=headless)
     elif mode == "human-comp":
-        game = Game(HumanPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+        game = Game(HumanPlayer, ComputerPlayer, headless=headless)
     elif mode == "comp-comp":
-        game = Game(ComputerPlayer, ComputerPlayer, headless=headless, record_gameplay=False)
+        game = Game(ComputerPlayer, ComputerPlayer, headless=headless)
     elif mode == "comp-ai":
-        game = Game(ComputerPlayer, AIPlayer, headless=headless, record_gameplay=False)
+        game = Game(ComputerPlayer, SimpleAIPlayer, headless=headless)
     elif mode == "ai-ai":
-        game = Game(AIPlayer, AIPlayer, headless=headless, record_gameplay=False)
+        game = Game(SimpleAIPlayer, SimpleAIPlayer, headless=headless)
     else:
         print(f"Unknown mode: {mode}")
         print_usage()
