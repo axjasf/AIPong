@@ -10,6 +10,7 @@ import numpy as np
 import pygame
 
 from .constants import WINDOW_WIDTH, GAME_AREA_TOP, GAME_AREA_HEIGHT, BALL_SIZE, PADDLE_HEIGHT
+from .game_types import BallState, PaddleState
 
 
 class GameState:
@@ -24,20 +25,8 @@ class GameState:
         self.y_scale = grid_height / GAME_AREA_HEIGHT
 
         # Initialize state tracking
-        self.ball_x: float = 0
-        self.ball_y: float = 0
-        self.prev_ball_x: float = 0
-        self.left_paddle_y: float = 0
-        self.right_paddle_y: float = 0
-
-        # Initialize collision detection
-        self.ball_rect: pygame.Rect = pygame.Rect(0, 0, BALL_SIZE, BALL_SIZE)
-        self.ball_passed_paddle: bool = False
-        self.ball_hit_paddle: bool = False
-
-        # Initialize hit tracking
-        self.left_hits: int = 0
-        self.right_hits: int = 0
+        self.ball = BallState()
+        self.paddles = PaddleState()
 
         # Initialize matrices
         self.current_matrix = np.zeros((grid_height, grid_width))
@@ -71,26 +60,26 @@ class GameState:
             1 for current position) and paddle positions (2)
         """
         # Detect ball direction change (paddle hit)
-        self.ball_hit_paddle = (
-            self.prev_ball_x < self.ball_x and ball_x < self.ball_x
+        self.ball.hit_paddle = (
+            self.ball.prev_x < self.ball.x and ball_x < self.ball.x
         ) or (  # Ball changed direction from right to left
-            self.prev_ball_x > self.ball_x and ball_x > self.ball_x
+            self.ball.prev_x > self.ball.x and ball_x > self.ball.x
         )  # Ball changed direction from left to right
 
         # Update positions for next frame
-        self.prev_ball_x = self.ball_x
-        self.ball_x = ball_x
-        self.ball_y = ball_y
-        self.left_paddle_y = left_paddle_y
-        self.right_paddle_y = right_paddle_y
+        self.ball.prev_x = self.ball.x
+        self.ball.x = ball_x
+        self.ball.y = ball_y
+        self.paddles.left_y = left_paddle_y
+        self.paddles.right_y = right_paddle_y
 
         # Update ball rect for collision detection
-        self.ball_rect.x = int(ball_x)
-        self.ball_rect.y = int(ball_y)
+        self.ball.rect.x = int(ball_x)
+        self.ball.rect.y = int(ball_y)
 
         # Track if ball passed a paddle
         prev_x = self.previous_ball_pos[0] / self.x_scale
-        self.ball_passed_paddle = (
+        self.ball.passed_paddle = (
             prev_x < WINDOW_WIDTH / 4 and ball_x > WINDOW_WIDTH / 4
         ) or (  # Passed left paddle
             prev_x > 3 * WINDOW_WIDTH / 4 and ball_x < 3 * WINDOW_WIDTH / 4
@@ -126,3 +115,28 @@ class GameState:
         self.previous_ball_pos = (ball_grid_y, ball_grid_x)
 
         return delta_matrix
+
+    @property
+    def ball_rect(self) -> pygame.Rect:
+        """Get the ball's rect for collision detection."""
+        return self.ball.rect
+
+    @property
+    def left_hits(self) -> int:
+        """Get the number of hits for the left paddle."""
+        return self.paddles.left_hits
+
+    @left_hits.setter
+    def left_hits(self, value: int) -> None:
+        """Set the number of hits for the left paddle."""
+        self.paddles.left_hits = value
+
+    @property
+    def right_hits(self) -> int:
+        """Get the number of hits for the right paddle."""
+        return self.paddles.right_hits
+
+    @right_hits.setter
+    def right_hits(self, value: int) -> None:
+        """Set the number of hits for the right paddle."""
+        self.paddles.right_hits = value
