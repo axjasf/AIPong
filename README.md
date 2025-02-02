@@ -1,32 +1,34 @@
-# AIPong
+# AI Pong
 
-A modern implementation of the classic Pong game with AI capabilities, written in Python using Pygame.
-
-[![CI/CD](https://github.com/yourusername/AIPong/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/AIPong/actions/workflows/ci.yml)
-[![Code Coverage](https://codecov.io/gh/yourusername/AIPong/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/AIPong)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+A modern implementation of the classic Pong game with AI capabilities, built using Python and Pygame.
 
 ## Features
 
+- Classic Pong gameplay with smooth controls and physics
 - Multiple game modes:
   - Human vs Human
   - Human vs AI
   - AI vs AI
-  - Training mode
-- Neural network-based AI that learns from gameplay
-- Record and replay human gameplay for AI training
-- Configurable game parameters
-- Modern, clean code architecture
+- AI player with reinforcement learning capabilities
+- Game state recording for AI training
+- Headless mode for fast AI training
+- Configurable game settings
+- Comprehensive logging system
+
+## Requirements
+
+- Python 3.10 or higher
+- Dependencies listed in `requirements.txt`
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/AIPong.git
-cd AIPong
+git clone https://github.com/yourusername/ai-pong.git
+cd ai-pong
 ```
 
-2. Create a virtual environment (optional but recommended):
+2. Create and activate a virtual environment (optional but recommended):
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -39,109 +41,95 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the game with different modes:
+### Playing the Game
 
+Run the game with default settings (Human vs Human):
 ```bash
-# Human vs Human
-python main.py human-human
+python -m src.main
+```
 
+Available command-line options:
+- `--player1`: Type of player 1 (left paddle) - "human" or "ai"
+- `--player2`: Type of player 2 (right paddle) - "human" or "ai"
+- `--headless`: Run without graphics (for training)
+- `--record`: Record game states for training
+- `--max-games`: Maximum number of games to play
+
+Examples:
+```bash
 # Human vs AI
-python main.py human-ai
+python -m src.main --player2 ai
 
-# AI vs AI
-python main.py ai-ai
-
-# Train AI
-python main.py ai-ai --train 1000 --speed
-
-# Learn from human gameplay
-python main.py human-ai --learn
+# AI vs AI training
+python -m src.main --player1 ai --player2 ai --headless --record --max-games 1000
 ```
 
 ### Controls
 
-- Player 1 (Left):
-  - W: Move Up
-  - S: Move Down
+- Player 1 (left):
+  - W: Move paddle up
+  - S: Move paddle down
 
-- Player 2 (Right):
-  - Up Arrow: Move Up
-  - Down Arrow: Move Down
+- Player 2 (right):
+  - Up Arrow: Move paddle up
+  - Down Arrow: Move paddle down
 
-- Space: Start New Game (after game over)
+- General:
+  - Space: Start new game (after game over)
+  - ESC: Quit game
+
+## Project Structure
+
+```
+ai-pong/
+├── src/
+│   ├── __init__.py
+│   ├── main.py          # Main game entry point
+│   ├── ball.py          # Ball physics and movement
+│   ├── paddle.py        # Paddle handling
+│   ├── player.py        # Player classes (Human/AI)
+│   ├── game_state.py    # Game state management
+│   ├── game_score.py    # Scoring system
+│   ├── game_loop.py     # Main game loop
+│   ├── game_recorder.py # Game state recording
+│   └── constants.py     # Game constants
+├── tests/               # Test files
+├── models/              # Saved AI models
+├── training_data/       # Recorded game data
+├── logs/               # Game logs
+├── requirements.txt    # Project dependencies
+└── README.md          # This file
+```
 
 ## Development
 
-### Setup Development Environment
-
-1. Install development dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Install pre-commit hooks:
-```bash
-pre-commit install
-```
-
-### Code Quality Tools
-
-- Format code with Black:
-```bash
-black src/ tests/
-```
-
-- Run linting:
-```bash
-pylint src/ tests/
-```
-
-- Run type checking:
-```bash
-mypy src/ tests/
-```
-
 ### Running Tests
 
-Run the test suite:
 ```bash
 pytest tests/
 ```
 
-With coverage:
+### Code Style
+
+The project uses:
+- Black for code formatting
+- Pylint for linting
+- Mypy for type checking
+
+Run style checks:
 ```bash
-pytest --cov=src/ tests/ --cov-report=html
-```
-
-### Project Structure
-
-```
-AIPong/
-├── src/                    # Source code
-│   ├── __init__.py        # Package initialization
-│   ├── game.py            # Main game class
-│   ├── ball.py            # Ball physics
-│   ├── paddle.py          # Paddle controls
-│   ├── player.py          # Player implementations
-│   ├── game_state.py      # Game state management
-│   ├── game_recorder.py   # Gameplay recording
-│   └── constants.py       # Game constants
-├── tests/                 # Test suite
-├── logs/                  # Game logs
-├── .github/              # GitHub Actions
-├── requirements.txt      # Dependencies
-├── pyproject.toml       # Project configuration
-├── .pylintrc           # Pylint configuration
-└── README.md           # This file
+black src/
+pylint src/
+mypy src/
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Run tests and ensure code quality
-5. Submit a pull request
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
@@ -150,5 +138,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - Original Pong game by Atari
-- Pygame community
-- Neural network implementation inspired by modern RL techniques 
+- Pygame community for the excellent game development library
+- TensorFlow team for the machine learning framework 
