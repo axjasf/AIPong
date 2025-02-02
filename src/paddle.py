@@ -16,11 +16,11 @@ class Paddle:
             min_y: Minimum Y position (top boundary)
             max_y: Maximum Y position (bottom boundary)
         """
-        self.x = x
-        self.y = y
-        self.min_y = min_y
-        self.max_y = max_y - PADDLE_HEIGHT
-        self.rect = pygame.Rect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT)
+        self.x: int = x
+        self.y: float = float(y)  # Store as float for smooth movement
+        self.min_y: int = min_y
+        self.max_y: int = max_y - PADDLE_HEIGHT
+        self.rect: pygame.Rect = pygame.Rect(x, int(self.y), PADDLE_WIDTH, PADDLE_HEIGHT)
 
     def move(self, up: bool) -> None:
         """Move the paddle up or down.
@@ -45,7 +45,7 @@ class Paddle:
         Args:
             y: New Y position
         """
-        self.y = max(self.min_y, min(y, self.max_y))
+        self.y = max(float(self.min_y), min(y, float(self.max_y)))
         self.rect.y = int(self.y)
 
     def draw(self, screen: pygame.Surface) -> None:
