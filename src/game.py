@@ -329,20 +329,6 @@ class Game:
                 self.game_over = True
                 self.winner = "Player 2"
 
-            # Record frame if in human game
-            if not self.headless:
-                self.recorder.update_frame(
-                    state,
-                    self.ball.x,
-                    self.ball.y,
-                    self.player1.paddle.get_y(),
-                    self.player2.paddle.get_y(),
-                    left_moved_up,
-                    right_moved_up,
-                    left_hit_ball,
-                    right_hit_ball,
-                )
-
     def draw_winner(self) -> None:
         """Draw the winner announcement."""
         if not self.winner or self.headless or not self.screen or not self.winner_font:
