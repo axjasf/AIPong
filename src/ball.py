@@ -95,6 +95,10 @@ class Ball:
                     self.angle = 80 if self.angle < 90 else 100
                 elif 260 < self.angle < 280:
                     self.angle = 260 if self.angle < 270 else 280
+                # Normalize angle to 0-360 range
+                self.angle = self.angle % 360
+                if self.angle < 0:
+                    self.angle += 360
                 break
 
         # Update position

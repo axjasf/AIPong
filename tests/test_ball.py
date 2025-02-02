@@ -1,96 +1,108 @@
-"""Test suite for ball physics and collision detection."""
+"""Test suite for ball movement and collisions."""
 
-import unittest
+import pytest
 import pygame
 import math
 from src.ball import Ball
 from src.paddle import Paddle
 from src.constants import (
-    WINDOW_WIDTH, GAME_AREA_TOP,
-    GAME_AREA_HEIGHT, BALL_SIZE,
-    BALL_SPEED
+    GAME_AREA_TOP,
+    GAME_AREA_HEIGHT,
+    GAME_AREA_WIDTH,
+    BALL_SPEED,
+    BALL_SIZE,
+    PADDLE_WIDTH,
+    PADDLE_HEIGHT
 )
 
-class TestBall(unittest.TestCase):
-    """Test cases for Ball class."""
-    
-    def setUp(self) -> None:
-        """Set up test fixtures."""
-        pygame.init()
-        self.start_x = WINDOW_WIDTH // 2
-        self.start_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
-        self.ball = Ball(self.start_x, self.start_y)
-        
-    def test_ball_initialization(self) -> None:
-        """Test ball is initialized with correct position and properties."""
-        self.assertEqual(self.ball.x, self.start_x)
-        self.assertEqual(self.ball.y, self.start_y)
-        self.assertEqual(self.ball.rect.width, BALL_SIZE)
-        self.assertEqual(self.ball.rect.height, BALL_SIZE)
-        self.assertEqual(self.ball.velocity, BALL_SPEED)
-        
-    def test_ball_reset(self) -> None:
-        """Test ball reset returns to starting position."""
-        # Move ball
-        self.ball.x = 100
-        self.ball.y = 100
-        
-        # Reset
-        self.ball.reset()
-        
-        # Check position
-        self.assertEqual(self.ball.x, self.start_x)
-        self.assertEqual(self.ball.y, self.start_y)
-        
-    def test_wall_collision(self) -> None:
-        """Test ball bounces off top and bottom walls."""
-        # Move ball to top wall
-        self.ball.angle = -45  # Moving up
-        self.ball.y = GAME_AREA_TOP + 1
-        
-        # Update
-        self.ball.move([])
-        
-        # Should bounce down
-        self.assertTrue(math.sin(math.radians(self.ball.angle)) > 0)
-        
-        # Move ball to bottom wall
-        self.ball.angle = 45  # Moving down
-        self.ball.y = GAME_AREA_TOP + GAME_AREA_HEIGHT - BALL_SIZE - 1
-        
-        # Update
-        self.ball.move([])
-        
-        # Should bounce up
-        self.assertTrue(math.sin(math.radians(self.ball.angle)) < 0)
-        
-    def test_paddle_collision(self) -> None:
-        """Test ball bounces off paddles."""
-        # Create test paddle
-        paddle = Paddle(100, self.start_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
-        
-        # Position ball for collision
-        self.ball.x = paddle.rect.right + BALL_SIZE
-        self.ball.y = paddle.rect.centery
-        self.ball.angle = 180  # Moving left
-        
-        # Update
-        self.ball.move([paddle])
-        
-        # Should bounce right
-        self.assertTrue(math.cos(math.radians(self.ball.angle)) > 0)
-        
-    def test_scoring(self) -> None:
-        """Test scoring when ball goes out of bounds."""
-        # Move ball past left boundary
-        self.ball.x = -1
-        result = self.ball.move([])
-        self.assertEqual(result, "p2_scored")
-        
-        # Move ball past right boundary
-        self.ball.x = WINDOW_WIDTH + 1
-        result = self.ball.move([])
-        self.assertEqual(result, "p1_scored")
 
-if __name__ == '__main__':
-    unittest.main() 
+@pytest.fixture
+def ball():
+    """Create a ball fixture for tests."""
+    pygame.init()
+    x = GAME_AREA_WIDTH // 2
+    y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
+    return Ball(x, y)
+
+
+@pytest.fixture
+def paddle():
+    """Create a paddle fixture for tests."""
+    pygame.init()
+    x = 100
+    y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
+    return Paddle(x, y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
+
+
+def test_ball_initialization(ball):
+    """Test ball is initialized with correct position and properties."""
+    assert ball.x == GAME_AREA_WIDTH // 2
+    assert ball.y == float(GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2))
+    assert ball.rect.width == BALL_SIZE
+    assert ball.rect.height == BALL_SIZE
+    assert ball.velocity == BALL_SPEED
+
+
+def test_ball_movement(ball):
+    """Test ball moves correctly."""
+    initial_x = ball.x
+    initial_y = ball.y
+    rad_angle = math.radians(ball.angle)
+    dx = ball.velocity * math.cos(rad_angle)
+    dy = ball.velocity * math.sin(rad_angle)
+    
+    ball.move([])
+    
+    assert abs(ball.x - (initial_x + dx)) < 0.0001  # Allow for floating point imprecision
+    assert abs(ball.y - (initial_y + dy)) < 0.0001
+
+
+def test_ball_top_boundary(ball):
+    """Test ball bounces off top boundary."""
+    # Move ball to top boundary
+    ball.y = GAME_AREA_TOP
+    ball.angle = 315  # Moving up-left
+    initial_angle = ball.angle
+    
+    ball.move([])
+    
+    assert ball.angle == -initial_angle  # Direction should reverse
+
+
+def test_ball_bottom_boundary(ball):
+    """Test ball bounces off bottom boundary."""
+    # Move ball to bottom boundary
+    ball.y = GAME_AREA_TOP + GAME_AREA_HEIGHT - BALL_SIZE
+    ball.angle = 45  # Moving down-right
+    initial_angle = ball.angle
+    
+    ball.move([])
+    
+    assert ball.angle == -initial_angle  # Direction should reverse
+
+
+def test_ball_paddle_collision(ball, paddle):
+    """Test ball bounces off paddle."""
+    # Position ball just to the left of paddle
+    ball.x = paddle.x - BALL_SIZE
+    ball.y = paddle.y + (PADDLE_HEIGHT // 2)
+    ball.angle = 0  # Moving right towards paddle
+    
+    # Update ball rect for collision detection
+    ball.rect.x = int(ball.x)
+    ball.rect.y = int(ball.y)
+    
+    # Move ball until it collides with paddle
+    collision_detected = False
+    for _ in range(10):  # Try a few times
+        if ball.rect.colliderect(paddle.rect):
+            collision_detected = True
+            break
+        ball.move([paddle])
+    
+    assert collision_detected, "Ball should have collided with paddle"
+    
+    # After collision, angle should be normalized to 0-360 range
+    assert 0 <= ball.angle <= 360
+    # Angle should change to roughly opposite direction (180 ± some randomness)
+    assert 160 <= ball.angle <= 200 

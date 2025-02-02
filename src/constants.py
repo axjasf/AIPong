@@ -18,6 +18,7 @@ WINDOW_HEIGHT = 600
 HEADER_HEIGHT = 80  # Score display area
 GAME_AREA_TOP = HEADER_HEIGHT
 GAME_AREA_HEIGHT = WINDOW_HEIGHT - HEADER_HEIGHT
+GAME_AREA_WIDTH = WINDOW_WIDTH  # Game area uses full window width
 
 # ====== Game Objects ======
 # Paddle settings
