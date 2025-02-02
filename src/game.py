@@ -101,7 +101,7 @@ class Game:
         self.player2: P
 
         # Initialize player 1
-        if callable(player1_type):
+        if callable(player1_type) and player1_type != HumanPlayer:
             self.player1 = player1_type(self.paddle_p1)
         elif player1_type == HumanPlayer and not headless:
             self.player1 = HumanPlayer(self.paddle_p1, P1_UP_KEY, P1_DOWN_KEY)
@@ -117,7 +117,7 @@ class Game:
             self.player1 = player1_type(self.paddle_p1, self.game_state)
 
         # Initialize player 2
-        if callable(player2_type):
+        if callable(player2_type) and player2_type != HumanPlayer:
             self.player2 = player2_type(self.paddle_p2)
         elif player2_type == HumanPlayer and not headless:
             self.player2 = HumanPlayer(self.paddle_p2, P2_UP_KEY, P2_DOWN_KEY)
