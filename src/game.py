@@ -9,7 +9,7 @@ This module contains the main Game class that manages:
 
 import logging
 import os
-from typing import List, Optional, Type, Tuple
+from typing import List, Optional, Type, Tuple, Union, cast, TypeVar, Any
 
 import pygame
 
@@ -50,13 +50,17 @@ from .game_state import GameState
 from .game_recorder import GameRecorder
 
 
+# Type variable for player types
+P = TypeVar('P', HumanPlayer, AIPlayer)
+
+
 class Game:
     """Manages the game state and main game loop."""
 
     def __init__(
         self,
-        player1_type: Type[Player] = HumanPlayer,
-        player2_type: Type[Player] = HumanPlayer,
+        player1_type: Type[Union[HumanPlayer, AIPlayer]] = HumanPlayer,
+        player2_type: Type[Union[HumanPlayer, AIPlayer]] = HumanPlayer,
         headless: bool = False,
         record_gameplay: bool = False,
     ) -> None:
@@ -67,16 +71,16 @@ class Game:
         )
 
         self.headless = headless
+        # Initialize screen as None first
+        self.screen: Optional[pygame.Surface] = None
+        
         if headless:
             self.logger.debug("Running in headless mode")
             os.environ["SDL_VIDEODRIVER"] = "dummy"
             pygame.init()
-            self.screen = None
         else:
             pygame.init()
-            self.screen: Optional[pygame.Surface] = pygame.display.set_mode(
-                (WINDOW_WIDTH, WINDOW_HEIGHT)
-            )
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
             pygame.display.set_caption("Pong")
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
@@ -99,14 +103,23 @@ class Game:
         self.logger.debug("Game state initialized")
 
         # Create players based on type
+        self.player1: Union[HumanPlayer, AIPlayer]
+        self.player2: Union[HumanPlayer, AIPlayer]
+
         if player1_type == HumanPlayer and not headless:
             self.player1 = HumanPlayer(left_paddle, P1_UP_KEY, P1_DOWN_KEY)
-        else:  # AIPlayer
+        else:
+            # Ensure we're using AIPlayer
+            if not issubclass(player1_type, AIPlayer):
+                raise TypeError("Non-headless mode requires HumanPlayer or AIPlayer")
             self.player1 = player1_type(left_paddle, self.game_state)
 
         if player2_type == HumanPlayer and not headless:
             self.player2 = HumanPlayer(right_paddle, P2_UP_KEY, P2_DOWN_KEY)
-        else:  # AIPlayer
+        else:
+            # Ensure we're using AIPlayer
+            if not issubclass(player2_type, AIPlayer):
+                raise TypeError("Non-headless mode requires HumanPlayer or AIPlayer")
             self.player2 = player2_type(right_paddle, self.game_state)
 
         self.paddles: List[Paddle] = [self.player1.paddle, self.player2.paddle]
