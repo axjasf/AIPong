@@ -15,7 +15,7 @@ if not os.path.exists("logs"):
 
 
 # Configure logging
-def setup_logging():
+def setup_logging() -> logging.Logger:
     """Configure logging for the application."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = f"logs/pong_{timestamp}.log"

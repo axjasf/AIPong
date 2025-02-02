@@ -14,14 +14,14 @@ from src.constants import (
 class TestBall(unittest.TestCase):
     """Test cases for Ball class."""
     
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test fixtures."""
         pygame.init()
         self.start_x = WINDOW_WIDTH // 2
         self.start_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2)
         self.ball = Ball(self.start_x, self.start_y)
         
-    def test_ball_initialization(self):
+    def test_ball_initialization(self) -> None:
         """Test ball is initialized with correct position and properties."""
         self.assertEqual(self.ball.x, self.start_x)
         self.assertEqual(self.ball.y, self.start_y)
@@ -29,7 +29,7 @@ class TestBall(unittest.TestCase):
         self.assertEqual(self.ball.rect.height, BALL_SIZE)
         self.assertEqual(self.ball.velocity, BALL_SPEED)
         
-    def test_ball_reset(self):
+    def test_ball_reset(self) -> None:
         """Test ball reset returns to starting position."""
         # Move ball
         self.ball.x = 100
@@ -42,7 +42,7 @@ class TestBall(unittest.TestCase):
         self.assertEqual(self.ball.x, self.start_x)
         self.assertEqual(self.ball.y, self.start_y)
         
-    def test_wall_collision(self):
+    def test_wall_collision(self) -> None:
         """Test ball bounces off top and bottom walls."""
         # Move ball to top wall
         self.ball.angle = -45  # Moving up
@@ -64,7 +64,7 @@ class TestBall(unittest.TestCase):
         # Should bounce up
         self.assertTrue(math.sin(math.radians(self.ball.angle)) < 0)
         
-    def test_paddle_collision(self):
+    def test_paddle_collision(self) -> None:
         """Test ball bounces off paddles."""
         # Create test paddle
         paddle = Paddle(100, self.start_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
@@ -80,7 +80,7 @@ class TestBall(unittest.TestCase):
         # Should bounce right
         self.assertTrue(math.cos(math.radians(self.ball.angle)) > 0)
         
-    def test_scoring(self):
+    def test_scoring(self) -> None:
         """Test scoring when ball goes out of bounds."""
         # Move ball past left boundary
         self.ball.x = -1
