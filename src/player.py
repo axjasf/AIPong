@@ -97,30 +97,29 @@ class ComputerPlayer(Player):
             paddle: The player's paddle
         """
         super().__init__(paddle)
-        self.last_ball_y = 0.0
         self.ball: Optional[Ball] = None
+        self.last_ball_y = 0.0
 
     def update(self) -> None:
         """Update paddle position based on ball's vertical movement."""
         if not self.ball:
-            # Find the ball in the game
-            for obj in pygame.sprite.Group():
-                if isinstance(obj, Ball):
-                    self.ball = obj
-                    break
             return
 
         # Get current ball position
         current_ball_y = self.ball.y
 
-        # Determine ball's vertical movement direction
-        if current_ball_y > self.last_ball_y:
-            # Ball is moving down
+        # Move paddle based on ball's vertical movement
+        paddle_center = self.paddle.get_y() + (PADDLE_HEIGHT / 2)
+        ball_center = current_ball_y + (BALL_SIZE / 2)
+
+        # Move paddle towards ball
+        if ball_center > paddle_center + 10:  # Add small deadzone
+            # Ball is below paddle center - move down
             new_y = self.paddle.get_y() + PADDLE_SPEED
             if new_y + PADDLE_HEIGHT <= GAME_AREA_TOP + GAME_AREA_HEIGHT:
                 self.paddle.set_y(new_y)
-        elif current_ball_y < self.last_ball_y:
-            # Ball is moving up
+        elif ball_center < paddle_center - 10:  # Add small deadzone
+            # Ball is above paddle center - move up
             new_y = self.paddle.get_y() - PADDLE_SPEED
             if new_y >= GAME_AREA_TOP:
                 self.paddle.set_y(new_y)
