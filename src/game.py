@@ -9,7 +9,7 @@ This module contains the main Game class that manages:
 
 import logging
 import os
-from typing import List, Optional, Type, Tuple, Union, cast, TypeVar, Any
+from typing import List, Optional, Type, Tuple, Union, TypeVar
 
 import pygame
 
@@ -40,8 +40,6 @@ from .constants import (
     P1_SCORE_X,
     P2_SCORE_X,
     # Game Objects
-    LEFT_PADDLE_X,
-    RIGHT_PADDLE_X,
     PADDLE_HEIGHT,
     PADDLE_WIDTH,
     PADDLE_MARGIN,
@@ -49,7 +47,7 @@ from .constants import (
 )
 from .paddle import Paddle
 from .ball import Ball
-from .player import Player, HumanPlayer, AIPlayer
+from .player import HumanPlayer, AIPlayer
 from .game_state import GameState
 from .game_recorder import GameRecorder
 
