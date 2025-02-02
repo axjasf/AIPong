@@ -1,71 +1,142 @@
-# AIPong
+# AI Pong
 
-A modern implementation of the classic Pong game using Pygame, featuring a modular and maintainable codebase.
-
-## Project Structure
-
-```
-AIPong/
-├── src/                  # Source code package
-│   ├── __init__.py      # Package initialization
-│   ├── constants.py     # Game constants and configuration
-│   ├── ball.py          # Ball class with physics
-│   ├── paddle.py        # Paddle class with controls
-│   └── game.py          # Main game logic and loop
-├── main.py              # Entry point
-├── requirements.txt     # Python dependencies
-└── README.md           # This file
-```
+A modern implementation of the classic Pong game with AI capabilities, built using Python and Pygame.
 
 ## Features
-- Two-player gameplay
-- Left paddle controlled with W/S keys
-- Right paddle controlled with UP/DOWN arrow keys
-- Basic physics with angle-based ball movement
-- Collision detection for paddles and walls
-- Modular code structure for easy maintenance
-- Constant configuration for easy tweaking
 
-## Technical Implementation
-- **Ball Physics**: Uses trigonometry (sin/cos) for smooth angular movement
-- **Collision System**: Utilizes Pygame's rectangle collision detection
-- **Game Loop**: Fixed 60 FPS with consistent physics updates
-- **Input Handling**: Real-time keyboard input for responsive controls
-- **Modular Design**: Separated concerns for better maintainability
+- Classic Pong gameplay with smooth controls and physics
+- Multiple game modes:
+  - Human vs Human
+  - Human vs AI
+  - AI vs AI
+- AI player with reinforcement learning capabilities
+- Game state recording for AI training
+- Headless mode for fast AI training
+- Configurable game settings
+- Comprehensive logging system
 
-## Setup
-1. Install Python 3.x
-2. Install dependencies:
+## Requirements
+
+- Python 3.10 or higher
+- Dependencies listed in `requirements.txt`
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/ai-pong.git
+cd ai-pong
+```
+
+2. Create and activate a virtual environment (optional but recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Running the Game
+## Usage
+
+### Playing the Game
+
+Run the game with default settings (Human vs Human):
 ```bash
-python main.py
+python -m src.main
 ```
 
-## Controls
-- Left Paddle:
-  - W: Move Up
-  - S: Move Down
-- Right Paddle:
-  - ↑: Move Up
-  - ↓: Move Down
-- Close window to quit
+Available command-line options:
+- `--player1`: Type of player 1 (left paddle) - "human" or "ai"
+- `--player2`: Type of player 2 (right paddle) - "human" or "ai"
+- `--headless`: Run without graphics (for training)
+- `--record`: Record game states for training
+- `--max-games`: Maximum number of games to play
 
-## Future Enhancements
-- Scoring system
-- Variable ball reflection angles based on paddle hit position
-- Dynamic velocity changes for increased difficulty
-- Ball reset mechanism after scoring
-- Sound effects and background music
-- Menu system and game states
-- AI opponent option
-- Network multiplayer support
+Examples:
+```bash
+# Human vs AI
+python -m src.main --player2 ai
+
+# AI vs AI training
+python -m src.main --player1 ai --player2 ai --headless --record --max-games 1000
+```
+
+### Controls
+
+- Player 1 (left):
+  - W: Move paddle up
+  - S: Move paddle down
+
+- Player 2 (right):
+  - Up Arrow: Move paddle up
+  - Down Arrow: Move paddle down
+
+- General:
+  - Space: Start new game (after game over)
+  - ESC: Quit game
+
+## Project Structure
+
+```
+ai-pong/
+├── src/
+│   ├── __init__.py
+│   ├── main.py          # Main game entry point
+│   ├── ball.py          # Ball physics and movement
+│   ├── paddle.py        # Paddle handling
+│   ├── player.py        # Player classes (Human/AI)
+│   ├── game_state.py    # Game state management
+│   ├── game_score.py    # Scoring system
+│   ├── game_loop.py     # Main game loop
+│   ├── game_recorder.py # Game state recording
+│   └── constants.py     # Game constants
+├── tests/               # Test files
+├── models/              # Saved AI models
+├── training_data/       # Recorded game data
+├── logs/               # Game logs
+├── requirements.txt    # Project dependencies
+└── README.md          # This file
+```
+
+## Development
+
+### Running Tests
+
+```bash
+pytest tests/
+```
+
+### Code Style
+
+The project uses:
+- Black for code formatting
+- Pylint for linting
+- Mypy for type checking
+
+Run style checks:
+```bash
+black src/
+pylint src/
+mypy src/
+```
 
 ## Contributing
-Feel free to fork the repository and submit pull requests for any of the future enhancements or bug fixes.
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
-This project is open source and available under the MIT License. 
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Original Pong game by Atari
+- Pygame community for the excellent game development library
+- TensorFlow team for the machine learning framework 
