@@ -17,7 +17,7 @@ from src.constants import (
 
 
 @pytest.fixture
-def ball():
+def ball() -> Ball:
     """Create a ball fixture for tests."""
     pygame.init()
     x = GAME_AREA_WIDTH // 2
@@ -26,7 +26,7 @@ def ball():
 
 
 @pytest.fixture
-def paddle():
+def paddle() -> Paddle:
     """Create a paddle fixture for tests."""
     pygame.init()
     x = 100
@@ -34,7 +34,7 @@ def paddle():
     return Paddle(x, y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
 
 
-def test_ball_initialization(ball):
+def test_ball_initialization(ball: Ball) -> None:
     """Test ball is initialized with correct position and properties."""
     assert ball.x == GAME_AREA_WIDTH // 2
     assert ball.y == float(GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2))
@@ -43,7 +43,7 @@ def test_ball_initialization(ball):
     assert ball.velocity == BALL_SPEED
 
 
-def test_ball_movement(ball):
+def test_ball_movement(ball: Ball) -> None:
     """Test ball moves correctly."""
     initial_x = ball.x
     initial_y = ball.y
@@ -57,7 +57,7 @@ def test_ball_movement(ball):
     assert abs(ball.y - (initial_y + dy)) < 0.0001
 
 
-def test_ball_top_boundary(ball):
+def test_ball_top_boundary(ball: Ball) -> None:
     """Test ball bounces off top boundary."""
     # Move ball to top boundary
     ball.y = GAME_AREA_TOP
@@ -69,7 +69,7 @@ def test_ball_top_boundary(ball):
     assert ball.angle == -initial_angle  # Direction should reverse
 
 
-def test_ball_bottom_boundary(ball):
+def test_ball_bottom_boundary(ball: Ball) -> None:
     """Test ball bounces off bottom boundary."""
     # Move ball to bottom boundary
     ball.y = GAME_AREA_TOP + GAME_AREA_HEIGHT - BALL_SIZE
@@ -81,7 +81,7 @@ def test_ball_bottom_boundary(ball):
     assert ball.angle == -initial_angle  # Direction should reverse
 
 
-def test_ball_paddle_collision(ball, paddle):
+def test_ball_paddle_collision(ball: Ball, paddle: Paddle) -> None:
     """Test ball bounces off paddle."""
     # Position ball just to the left of paddle
     ball.x = paddle.x - BALL_SIZE

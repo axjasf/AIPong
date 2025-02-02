@@ -14,13 +14,13 @@ from src.constants import (
 
 
 @pytest.fixture
-def game():
+def game() -> Game:
     """Create a game fixture for tests."""
     pygame.init()
     return Game()
 
 
-def test_game_initialization(game):
+def test_game_initialization(game: Game) -> None:
     """Test game is initialized with correct state."""
     assert game.player1.score == 0
     assert game.player2.score == 0
@@ -30,7 +30,7 @@ def test_game_initialization(game):
     assert game.player2.paddle is not None
 
 
-def test_game_scoring_p1(game):
+def test_game_scoring_p1(game: Game) -> None:
     """Test player 1 scoring."""
     initial_score = game.player1.score
     
@@ -42,7 +42,7 @@ def test_game_scoring_p1(game):
     assert game.ball.x == GAME_AREA_WIDTH // 2  # Ball should reset
 
 
-def test_game_scoring_p2(game):
+def test_game_scoring_p2(game: Game) -> None:
     """Test player 2 scoring."""
     initial_score = game.player2.score
     
@@ -54,7 +54,7 @@ def test_game_scoring_p2(game):
     assert game.ball.x == GAME_AREA_WIDTH // 2  # Ball should reset
 
 
-def test_game_over_condition(game):
+def test_game_over_condition(game: Game) -> None:
     """Test game over condition."""
     # Set score close to winning
     game.player1.score = 9
@@ -68,7 +68,7 @@ def test_game_over_condition(game):
     assert game.player1.score == 10
 
 
-def test_paddle_movement(game):
+def test_paddle_movement(game: Game) -> None:
     """Test paddle movement in game context."""
     initial_y_p1 = game.player1.paddle.get_y()
     initial_y_p2 = game.player2.paddle.get_y()
@@ -81,7 +81,7 @@ def test_paddle_movement(game):
     assert game.player2.paddle.get_y() > initial_y_p2
 
 
-def test_ball_paddle_collision(game):
+def test_ball_paddle_collision(game: Game) -> None:
     """Test ball collision with paddles in game context."""
     # Position ball near p1 paddle
     game.ball.x = PADDLE_WIDTH + BALL_SIZE

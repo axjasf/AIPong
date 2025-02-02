@@ -13,7 +13,7 @@ from src.constants import (
 
 
 @pytest.fixture
-def paddle():
+def paddle() -> Paddle:
     """Create a paddle fixture for tests."""
     pygame.init()
     x = 100
@@ -21,7 +21,7 @@ def paddle():
     return Paddle(x, y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
 
 
-def test_paddle_initialization(paddle):
+def test_paddle_initialization(paddle: Paddle) -> None:
     """Test paddle is initialized with correct position and properties."""
     assert paddle.x == 100
     assert paddle.y == float(GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2))
@@ -29,7 +29,7 @@ def test_paddle_initialization(paddle):
     assert paddle.rect.height == PADDLE_HEIGHT
 
 
-def test_paddle_movement_up(paddle):
+def test_paddle_movement_up(paddle: Paddle) -> None:
     """Test paddle moves up correctly."""
     initial_y = paddle.get_y()
     paddle.move(up=True)
@@ -37,7 +37,7 @@ def test_paddle_movement_up(paddle):
     assert paddle.get_y() == initial_y - PADDLE_SPEED
 
 
-def test_paddle_movement_down(paddle):
+def test_paddle_movement_down(paddle: Paddle) -> None:
     """Test paddle moves down correctly."""
     initial_y = paddle.get_y()
     paddle.move(up=False)
@@ -45,7 +45,7 @@ def test_paddle_movement_down(paddle):
     assert paddle.get_y() == initial_y + PADDLE_SPEED
 
 
-def test_paddle_top_boundary(paddle):
+def test_paddle_top_boundary(paddle: Paddle) -> None:
     """Test paddle stops at top boundary."""
     # Move paddle to top boundary
     paddle.set_y(GAME_AREA_TOP)
@@ -58,7 +58,7 @@ def test_paddle_top_boundary(paddle):
     assert paddle.get_y() == initial_y
 
 
-def test_paddle_bottom_boundary(paddle):
+def test_paddle_bottom_boundary(paddle: Paddle) -> None:
     """Test paddle stops at bottom boundary."""
     # Move paddle to bottom boundary
     max_y = GAME_AREA_TOP + GAME_AREA_HEIGHT - PADDLE_HEIGHT
