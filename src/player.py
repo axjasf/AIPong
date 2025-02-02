@@ -2,6 +2,7 @@
 
 This module contains the base Player class and its implementations:
 - HumanPlayer: Handles human input
+- ComputerPlayer: Simple rule-based computer player
 - AIPlayer: Handles AI decision making
 """
 
@@ -24,6 +25,7 @@ from .constants import (
 )
 from .game_state import GameState
 from .paddle import Paddle
+from .ball import Ball
 
 
 class Player(ABC):
@@ -83,6 +85,48 @@ class HumanPlayer(Player):
             # Ensure paddle stays within game area
             if new_y + PADDLE_HEIGHT <= GAME_AREA_TOP + GAME_AREA_HEIGHT:
                 self.paddle.set_y(new_y)
+
+
+class ComputerPlayer(Player):
+    """Computer player that follows the ball's vertical movement."""
+
+    def __init__(self, paddle: Paddle) -> None:
+        """Initialize the computer player.
+
+        Args:
+            paddle: The player's paddle
+        """
+        super().__init__(paddle)
+        self.last_ball_y = 0.0
+        self.ball: Optional[Ball] = None
+
+    def update(self) -> None:
+        """Update paddle position based on ball's vertical movement."""
+        if not self.ball:
+            # Find the ball in the game
+            for obj in pygame.sprite.Group():
+                if isinstance(obj, Ball):
+                    self.ball = obj
+                    break
+            return
+
+        # Get current ball position
+        current_ball_y = self.ball.y
+
+        # Determine ball's vertical movement direction
+        if current_ball_y > self.last_ball_y:
+            # Ball is moving down
+            new_y = self.paddle.get_y() + PADDLE_SPEED
+            if new_y + PADDLE_HEIGHT <= GAME_AREA_TOP + GAME_AREA_HEIGHT:
+                self.paddle.set_y(new_y)
+        elif current_ball_y < self.last_ball_y:
+            # Ball is moving up
+            new_y = self.paddle.get_y() - PADDLE_SPEED
+            if new_y >= GAME_AREA_TOP:
+                self.paddle.set_y(new_y)
+
+        # Update last known ball position
+        self.last_ball_y = current_ball_y
 
 
 class AIPlayer(Player):
