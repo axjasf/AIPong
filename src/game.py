@@ -153,12 +153,11 @@ class Game:
         """Initialize game objects (paddles and ball)."""
         # Initialize paddles
         paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
-        self.paddle_p1 = Paddle(PADDLE_MARGIN, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
-        self.paddle_p2 = Paddle(WINDOW_WIDTH - PADDLE_MARGIN - PADDLE_WIDTH, paddle_y, GAME_AREA_TOP, GAME_AREA_TOP + GAME_AREA_HEIGHT)
+        self.paddle_p1 = Paddle(PADDLE_MARGIN, paddle_y, True)  # Left paddle
+        self.paddle_p2 = Paddle(WINDOW_WIDTH - PADDLE_MARGIN - PADDLE_WIDTH, paddle_y, False)  # Right paddle
         
-        # Initialize ball in center
-        ball_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - BALL_SIZE) // 2
-        self.ball: Ball = Ball(GAME_AREA_WIDTH // 2, ball_y)
+        # Initialize ball
+        self.ball = Ball()
 
     def handle_input(self) -> None:
         """Handle keyboard input for game control."""

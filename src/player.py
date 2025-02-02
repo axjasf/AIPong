@@ -1,50 +1,66 @@
-"""Player classes for Pong game.
+"""Player handling system.
 
 This module contains the base Player class and its implementations:
-- Base abstract Player class defining the interface
-- HumanPlayer for keyboard-controlled players
-- AIPlayer for computer-controlled players
+- HumanPlayer: Handles human input
+- AIPlayer: Handles AI decision making
 """
 
+import logging
 import json
 import os
+import numpy as np
+import pygame
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
-import numpy as np
-from numpy.typing import NDArray
-import pygame
-
 from .paddle import Paddle
 from .game_state import GameState
+from .constants import (
+    GAME_AREA_TOP,
+    GAME_AREA_HEIGHT,
+    PADDLE_HEIGHT,
+    PADDLE_SPEED,
+)
 
 
 class Player(ABC):
-    """Abstract base class for all player types (human and AI)."""
+    """Abstract base class for players."""
 
     def __init__(self, paddle: Paddle) -> None:
-        """Initialize the player with their paddle."""
+        """Initialize the player.
+
+        Args:
+            paddle: The player's paddle
+        """
+        self.logger = logging.getLogger(__name__)
         self.paddle = paddle
-        self.score: int = 0
+        self.score = 0
 
     @abstractmethod
     def update(self) -> None:
-        """Update the player's paddle position based on their control method."""
+        """Update the player's paddle position."""
+        pass
 
     def increment_score(self) -> None:
-        """Increment the player's score by 1."""
+        """Increment the player's score."""
         self.score += 1
 
     def reset_score(self) -> None:
-        """Reset the player's score to 0."""
+        """Reset the player's score."""
         self.score = 0
 
 
 class HumanPlayer(Player):
-    """Human-controlled player using keyboard input."""
+    """Human player controlled by keyboard input."""
 
     def __init__(self, paddle: Paddle, up_key: int, down_key: int) -> None:
-        """Initialize the human player with their paddle and control keys."""
+        """Initialize the human player.
+
+        Args:
+            paddle: The player's paddle
+            up_key: Pygame key code for moving up
+            down_key: Pygame key code for moving down
+        """
         super().__init__(paddle)
         self.up_key = up_key
         self.down_key = down_key
@@ -53,14 +69,21 @@ class HumanPlayer(Player):
         """Update paddle position based on keyboard input."""
         keys = pygame.key.get_pressed()
 
+        # Move paddle up/down based on key presses
         if keys[self.up_key]:
-            self.paddle.move(up=True)
-        if keys[self.down_key]:
-            self.paddle.move(up=False)
+            new_y = self.paddle.get_y() - PADDLE_SPEED
+            # Ensure paddle stays within game area
+            if new_y >= GAME_AREA_TOP:
+                self.paddle.set_y(new_y)
+        elif keys[self.down_key]:
+            new_y = self.paddle.get_y() + PADDLE_SPEED
+            # Ensure paddle stays within game area
+            if new_y + PADDLE_HEIGHT <= GAME_AREA_TOP + GAME_AREA_HEIGHT:
+                self.paddle.set_y(new_y)
 
 
 class AIPlayer(Player):
-    """AI-controlled player using reinforcement learning."""
+    """AI player that makes decisions based on game state."""
 
     def __init__(
         self,
@@ -88,7 +111,7 @@ class AIPlayer(Player):
             self.weights = np.random.randn(total_inputs, num_nodes) * np.sqrt(2.0 / total_inputs)
 
         # Training data for learning
-        self.last_state: Optional[NDArray[np.float64]] = None
+        self.last_state: Optional[np.ndarray] = None
         self.last_action: Optional[bool] = None
         self.last_probability: Optional[float] = None
 
@@ -104,11 +127,11 @@ class AIPlayer(Player):
                 self.games_played = int(stats["games_played"])  # Ensure type safety
                 self.total_reward = float(stats["total_reward"])  # Ensure type safety
 
-    def _sigmoid(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
+    def _sigmoid(self, x: np.ndarray) -> np.ndarray:
         """Apply sigmoid activation function."""
         return 1 / (1 + np.exp(-x))
 
-    def decide_move(self, state: NDArray[np.float64]) -> Tuple[bool, float]:
+    def decide_move(self, state: np.ndarray) -> Tuple[bool, float]:
         """Decide whether to move up or down based on current state."""
         # Flatten the state matrix
         flat_state = state.flatten()
