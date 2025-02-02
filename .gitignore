@@ -38,6 +38,10 @@ ai_stats.json
 logs/
 *.log
 
+# Testing
+.coverage
+.pytest_cache/
+
 # OS
 .DS_Store
 .DS_Store?
