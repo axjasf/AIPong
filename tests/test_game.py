@@ -16,6 +16,37 @@ from src.constants import (
 import logging
 
 
+def test_player_type_initialization():
+    """Test initialization with different player types."""
+    # Test with default human players
+    game1 = Game()
+    assert isinstance(game1.player1, HumanPlayer)
+    assert isinstance(game1.player2, HumanPlayer)
+    pygame.quit()
+    
+    # Test with computer players
+    game2 = Game(player1_type=ComputerPlayer, player2_type=ComputerPlayer)
+    assert isinstance(game2.player1, ComputerPlayer)
+    assert isinstance(game2.player2, ComputerPlayer)
+    assert game2.player1.ball is game2.ball  # Computer players should have ball reference
+    assert game2.player2.ball is game2.ball
+    pygame.quit()
+    
+    # Test human vs computer
+    game3 = Game(player1_type=HumanPlayer, player2_type=ComputerPlayer)
+    assert isinstance(game3.player1, HumanPlayer)
+    assert isinstance(game3.player2, ComputerPlayer)
+    assert game3.player2.ball is game3.ball  # Only computer player should have ball reference
+    pygame.quit()
+    
+    # Test computer vs human
+    game4 = Game(player1_type=ComputerPlayer, player2_type=HumanPlayer)
+    assert isinstance(game4.player1, ComputerPlayer)
+    assert isinstance(game4.player2, HumanPlayer)
+    assert game4.player1.ball is game4.ball  # Only computer player should have ball reference
+    pygame.quit()
+
+
 @pytest.fixture
 def game():
     """Fixture for game instance."""
