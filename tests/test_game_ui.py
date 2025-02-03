@@ -4,108 +4,208 @@ import pytest
 import pygame
 from unittest.mock import MagicMock, patch
 from src.game_ui import GameUI
+from src.ball import Ball
+from src.paddle import Paddle
 from src.constants import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
+    GAME_AREA_TOP,
+    WHITE,
     SCORE_COLOR,
     SCORE_FONT_SIZE,
     WINNER_FONT_SIZE,
     P1_SCORE_X,
+    P2_SCORE_X,
     SCORE_MARGIN_TOP,
 )
 
 
 @pytest.fixture
-def game_ui():
-    """Fixture for game UI instance."""
-    pygame.init()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+def mock_screen():
+    """Fixture for mock screen with tracking capabilities."""
+    class MockScreen:
+        def __init__(self):
+            self.fill_color = None
+            self.blit_calls = []
+            self.draw_line_calls = []
+        
+        def fill(self, color):
+            self.fill_color = color
+        
+        def blit(self, surface, position):
+            self.blit_calls.append((surface, position))
+        
+        def get_at(self, pos):
+            return (0, 0, 0, 255)  # Default black
+            
+    return MockScreen()
+
+
+@pytest.fixture
+def mock_pygame_setup(monkeypatch, mock_screen):
+    """Setup pygame mocks for testing."""
+    class MockDisplay:
+        @staticmethod
+        def set_mode(size):
+            return mock_screen
+            
+        @staticmethod
+        def flip():
+            pass
+    
+    class MockDraw:
+        @staticmethod
+        def line(surface, color, start_pos, end_pos):
+            surface.draw_line_calls.append((color, start_pos, end_pos))
+    
+    monkeypatch.setattr(pygame, 'display', MockDisplay)
+    monkeypatch.setattr(pygame, 'draw', MockDraw)
+    return mock_screen
+
+
+def test_headless_initialization():
+    """Test game UI initialization in headless mode."""
+    with patch('pygame.font.init'):  # Mock font initialization
+        ui = GameUI(headless=True)
+        assert ui.screen is None
+        assert not hasattr(ui, 'score_font') or ui.score_font is None
+        assert not hasattr(ui, 'winner_font') or ui.winner_font is None
+        assert ui.headless
+
+
+def test_headless_draw_operations(mock_pygame_setup):
+    """Test that draw operations do nothing in headless mode."""
+    ui = GameUI(headless=True)
+    screen = mock_pygame_setup
+    
+    # All these operations should return immediately without error
+    ui.draw_scores(5, 3)
+    assert len(screen.blit_calls) == 0
+    
+    ui.draw_winner("Player 1")
+    assert len(screen.blit_calls) == 0
+    
+    ball = Ball()
+    paddles = [Paddle(0, 0, True), Paddle(WINDOW_WIDTH - 20, 0, False)]
+    ui.draw(ball, paddles, 5, 3, True, "Player 1")
+    assert len(screen.blit_calls) == 0
+
+
+def test_pygame_initialization_failure(monkeypatch):
+    """Test handling of pygame initialization failures."""
+    def mock_init():
+        raise pygame.error("Initialization failed")
+    
+    monkeypatch.setattr(pygame.font, "init", mock_init)
+    
+    with pytest.raises(pygame.error):
+        GameUI(headless=False)
+
+
+def test_main_draw_method(mock_pygame_setup):
+    """Test the main draw method with all components."""
     ui = GameUI(headless=False)
-    yield ui
-    pygame.quit()
-
-
-def test_game_ui_initialization(game_ui):
-    """Test game UI initialization."""
-    assert game_ui.screen is not None
-    assert game_ui.score_font is not None
-    assert game_ui.winner_font is not None
-    assert not game_ui.headless
-
-
-@patch('pygame.font.SysFont')
-def test_draw_scores(mock_sysfont, game_ui):
-    """Test score rendering."""
-    # Create a real surface for the mock to return
-    mock_font = MagicMock()
-    text_surface = pygame.Surface((50, 20))
-    text_surface.fill(SCORE_COLOR)
-    mock_font.render.return_value = text_surface
-    mock_sysfont.return_value = mock_font
+    ui.screen = mock_pygame_setup
     
-    # Replace the real fonts with our mock
-    game_ui.score_font = mock_font
+    # Create mock game objects
+    ball = MagicMock()
+    paddle1 = MagicMock()
+    paddle2 = MagicMock()
+    paddles = [paddle1, paddle2]
     
-    # Fill screen with black
-    game_ui.screen.fill((0, 0, 0))
-    pygame.display.flip()
+    # Draw game state
+    ui.draw(ball, paddles, 5, 3, False, None)
     
-    # Draw scores
-    game_ui.draw_scores(5, 3)
-    pygame.display.flip()
+    # Verify screen was cleared
+    assert ui.screen.fill_color is not None
+    
+    # Verify separator line was drawn
+    assert len(ui.screen.draw_line_calls) > 0
+    line_call = ui.screen.draw_line_calls[0]
+    assert line_call[0] == WHITE  # Color
+    assert line_call[1][1] == GAME_AREA_TOP  # Y position
+    
+    # Verify game objects were drawn
+    ball.draw.assert_called_once()
+    paddle1.draw.assert_called_once()
+    paddle2.draw.assert_called_once()
+
+
+def test_draw_very_high_scores(mock_pygame_setup):
+    """Test drawing very high scores doesn't break rendering."""
+    ui = GameUI(headless=False)
+    ui.screen = mock_pygame_setup
+    
+    # Test with unusually high scores
+    ui.draw_scores(99999, 99999)
     
     # Verify both scores were rendered
-    mock_font.render.assert_any_call("5", True, SCORE_COLOR)
-    mock_font.render.assert_any_call("3", True, SCORE_COLOR)
+    assert len(ui.screen.blit_calls) == 2
 
 
-@patch('pygame.font.SysFont')
-def test_draw_winner(mock_sysfont, game_ui):
-    """Test winner message rendering."""
-    # Create a real surface for the mock to return
-    mock_font = MagicMock()
-    text_surface = pygame.Surface((150, 30))
-    text_surface.fill((255, 255, 255))  # White
-    mock_font.render.return_value = text_surface
-    mock_sysfont.return_value = mock_font
+def test_invalid_winner_strings(mock_pygame_setup):
+    """Test drawing winner with various string inputs."""
+    ui = GameUI(headless=False)
+    ui.screen = mock_pygame_setup
     
-    # Replace the real fonts with our mock
-    game_ui.winner_font = mock_font
+    # Test empty string
+    ui.draw_winner("")
+    assert len(ui.screen.blit_calls) == 0
     
-    # Fill screen with black
-    game_ui.screen.fill((0, 0, 0))
-    pygame.display.flip()
+    # Test None
+    ui.draw_winner(None)
+    assert len(ui.screen.blit_calls) == 0
     
-    # Draw winner message
-    game_ui.draw_winner("Player 1")
-    pygame.display.flip()
-    
-    # Verify the winner message was rendered
-    mock_font.render.assert_called_with(
-        "Player 1 Wins! Press SPACE for new game",
-        True,
-        (255, 255, 255)  # White
-    )
+    # Test very long name
+    ui.draw_winner("A" * 100)  # Should still render without breaking
 
 
-def test_screen_update(game_ui):
-    """Test screen update integration."""
-    # Fill screen with black
-    game_ui.screen.fill((0, 0, 0))
-    pygame.display.flip()
+def test_score_positions(mock_pygame_setup):
+    """Test that scores are rendered at correct positions."""
+    ui = GameUI(headless=False)
+    ui.screen = mock_pygame_setup
     
-    # Get initial pixel at score position (left score)
-    score_x = P1_SCORE_X  # Use constant for left player score position
-    score_y = SCORE_MARGIN_TOP + 10  # Add small offset to ensure we hit the text
-    initial_pixel = game_ui.screen.get_at((score_x, score_y))
+    ui.draw_scores(1, 2)
     
-    # Draw scores
-    game_ui.draw_scores(1, 1)
-    pygame.display.flip()
+    # Verify positions of score renders
+    assert len(ui.screen.blit_calls) == 2
     
-    # Get pixel after rendering
-    final_pixel = game_ui.screen.get_at((score_x, score_y))
+    # Get positions of both scores
+    _, pos1 = ui.screen.blit_calls[0]
+    _, pos2 = ui.screen.blit_calls[1]
     
-    # Initial pixel should be black, final pixel should be score color
-    assert initial_pixel[0:3] == (0, 0, 0)  # Black
-    assert final_pixel[0:3] == SCORE_COLOR  # Score color 
+    # Verify x positions match constants
+    assert hasattr(pos1, 'midtop')
+    assert hasattr(pos2, 'midtop')
+    assert pos1.midtop[0] == P1_SCORE_X
+    assert pos2.midtop[0] == P2_SCORE_X
+    assert pos1.midtop[1] == SCORE_MARGIN_TOP
+    assert pos2.midtop[1] == SCORE_MARGIN_TOP
+
+
+@patch('pygame.font.Font')
+def test_font_sizes(mock_font):
+    """Test that correct font sizes are used."""
+    GameUI(headless=False)
+    
+    # Verify font sizes
+    mock_font.assert_any_call(None, SCORE_FONT_SIZE)
+    mock_font.assert_any_call(None, WINNER_FONT_SIZE)
+
+
+def test_game_over_draw(mock_pygame_setup):
+    """Test drawing the game over state."""
+    ui = GameUI(headless=False)
+    ui.screen = mock_pygame_setup
+    
+    # Create mock game objects
+    ball = MagicMock()
+    paddles = [MagicMock(), MagicMock()]
+    
+    # Draw with game over
+    ui.draw(ball, paddles, 11, 5, True, "Player 1")
+    
+    # Verify all components were drawn
+    assert ui.screen.fill_color is not None  # Screen cleared
+    assert len(ui.screen.draw_line_calls) > 0  # Separator drawn
+    assert len(ui.screen.blit_calls) >= 3  # Scores (2) + Winner message (1) 
