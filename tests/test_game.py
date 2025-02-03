@@ -107,16 +107,25 @@ def test_ball_paddle_collision(game):
 def test_ball_wall_collision(game):
     """Test ball collision with walls."""
     # Position ball near top wall
-    initial_x = game.ball.x
-    game.ball.y = GAME_AREA_TOP
-    game.ball.dy = -abs(game.ball.dy)  # Ensure moving up
+    game.ball.y = GAME_AREA_TOP + 1  # Position ball just above top wall
+    game.ball.dy = -2.0  # Set a fixed upward velocity
+    game.ball.dx = 2.0  # Set a fixed horizontal velocity
+    
+    # Update ball's rect to match new position
+    game.ball.rect.x = int(game.ball.x)
+    game.ball.rect.y = int(game.ball.y)
+    
+    # Store initial values
+    initial_dy = game.ball.dy
     
     # Update game
     game.update()
     
-    # Ball should bounce off wall but maintain x direction
-    assert game.ball.y > GAME_AREA_TOP
-    assert (game.ball.x - initial_x) != 0  # x movement should continue
+    # Ball should bounce off wall
+    assert game.ball.dy > 0, "Ball should change vertical direction after hitting wall"
+    assert abs(game.ball.dy) == abs(initial_dy), "Ball should maintain speed after wall collision"
+    assert game.ball.dx == 2.0, "Horizontal velocity should not change"
+    assert game.ball.y >= GAME_AREA_TOP, "Ball should not go beyond game area"
 
 
 def test_scoring(game):
