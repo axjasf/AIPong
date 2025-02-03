@@ -152,6 +152,9 @@ class Game:
         self.waiting_for_reset: bool = False
         self.game_over: bool = False
         self.winner: Optional[str] = None
+        self.is_paused: bool = False
+        self.left_hits_this_point: int = 0
+        self.right_hits_this_point: int = 0
 
         # Training stats
         self.games_completed: int = 0
@@ -247,11 +250,18 @@ class Game:
         if self.max_games and self.games_completed >= self.max_games:
             self.running = False
 
+    def toggle_pause(self) -> None:
+        """Toggle the game's pause state."""
+        self.is_paused = not self.is_paused
+
     def update(self) -> None:
         """Update game state."""
         if self.game_over:
             self.logger.info("Game over. Winner: %s", self.winner)
             self.reset_game()
+            return
+
+        if self.is_paused:
             return
 
         if self.waiting_for_reset:
@@ -290,13 +300,14 @@ class Game:
             if self.player2.paddle.get_y() != prev_right_y:
                 right_moved_up = self.player2.paddle.get_y() < prev_right_y
 
-            # Update ball and check for scoring
-            result = self.ball.move(self.paddles)
-
-            # Track ball hits
+            # Check for paddle collisions before moving ball
             left_hit_ball = self.player1.paddle.rect.colliderect(self.ball.rect)
             right_hit_ball = self.player2.paddle.rect.colliderect(self.ball.rect)
 
+            # Update ball and check for scoring
+            result = self.ball.move(self.paddles)
+
+            # Track ball hits after ball movement
             if left_hit_ball:
                 self.left_hits_this_point += 1
                 self.game_state.left_hits = self.left_hits_this_point
@@ -402,3 +413,12 @@ class Game:
             self.player1 if isinstance(self.player1, AIPlayer) else None,
             self.player2 if isinstance(self.player2, AIPlayer) else None,
         )
+
+    @property
+    def score(self) -> Tuple[int, int]:
+        """Get the current game score.
+        
+        Returns:
+            Tuple of (player1 score, player2 score)
+        """
+        return (self.player1.score, self.player2.score)

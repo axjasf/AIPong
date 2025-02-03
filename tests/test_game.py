@@ -48,6 +48,7 @@ def test_game_reset(game):
     game.player1.increment_score()
     game.player2.increment_score()
     initial_ball_pos = (game.ball.x, game.ball.y)
+    initial_ball_vel = (game.ball.dx, game.ball.dy)
     
     # Move paddles
     initial_p1_y = game.paddles[0].get_y()
@@ -59,8 +60,11 @@ def test_game_reset(game):
     game.reset_game()
     
     # Verify reset state
-    assert game.score == (0, 0)
-    assert (game.ball.x, game.ball.y) != initial_ball_pos
+    assert game.score == (0, 0)  # Scores should reset to 0-0
+    # Ball should be back at center (same position)
+    assert (game.ball.x, game.ball.y) == initial_ball_pos
+    # Ball velocity should be randomized (different direction)
+    assert (game.ball.dx, game.ball.dy) != initial_ball_vel
     assert game.paddles[0].get_y() == initial_p1_y
     assert game.paddles[1].get_y() == initial_p2_y
 
@@ -152,4 +156,40 @@ def test_game_over_condition(game):
     
     # Game should be over
     assert game.game_over
-    assert game.winner == "Player 1" 
+    assert game.winner == "Player 1"
+
+
+def test_point_scored_reset(game):
+    """Test reset behavior when a point is scored (during game)."""
+    # Enable headless mode for immediate reset
+    game.headless = True
+    
+    # Score a point
+    initial_score = game.score[0]  # Left player score
+    game.ball.x = WINDOW_WIDTH + BALL_SIZE  # Move ball past right paddle
+    
+    # Remember positions
+    initial_ball_pos = (game.ball.x, game.ball.y)
+    initial_ball_vel = (game.ball.dx, game.ball.dy)
+    
+    # Update should trigger point scoring
+    game.update()
+    
+    # Score should increase but game should continue
+    assert game.score[0] == initial_score + 1
+    assert not game.game_over
+    assert game.waiting_for_reset  # Ball reset is pending
+    
+    # Update again to perform the reset
+    game.update()
+    
+    # Ball should be back at center with new direction
+    center_x = WINDOW_WIDTH / 2 - game.ball.size / 2
+    center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (game.ball.size / 2)
+    assert (game.ball.x, game.ball.y) == (center_x, center_y)  # Exactly at center
+    assert (game.ball.dx, game.ball.dy) != initial_ball_vel  # New direction
+    
+    # Paddles should be back at center height
+    paddle_center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
+    assert game.paddles[0].get_y() == paddle_center_y
+    assert game.paddles[1].get_y() == paddle_center_y 
