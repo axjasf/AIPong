@@ -196,3 +196,52 @@ def test_human_player_movement(paddle, monkeypatch):
             moved = True
             break  # Movement detected
     assert moved, f"Paddle should move down from {start_y} but stayed at {current_y}"
+
+
+def test_computer_player_difficulty_reaction(paddle, ball, monkeypatch):
+    """Test that computer player's reaction time varies with difficulty."""
+    # Mock pygame.time.get_ticks to control time
+    ticks = 0
+    def mock_get_ticks():
+        nonlocal ticks
+        return ticks
+    monkeypatch.setattr(pygame.time, 'get_ticks', mock_get_ticks)
+
+    # Test easy difficulty
+    easy_player = ComputerPlayer(paddle, difficulty="easy")
+    easy_player.set_ball(ball)
+    
+    # Move ball significantly
+    ball.y += 100
+    
+    # Update before reaction time
+    ticks = 100  # Set time less than minimum reaction time
+    easy_player.update()
+    initial_y = paddle.y
+    
+    # Verify paddle hasn't moved yet due to reaction delay
+    assert paddle.y == initial_y
+    
+    # Update after reaction time
+    ticks = 1000  # Set time more than maximum reaction time
+    easy_player.update()
+    
+    # Verify paddle has moved
+    assert paddle.y != initial_y
+
+    # Reset paddle position
+    paddle.y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
+    
+    # Test hard difficulty
+    hard_player = ComputerPlayer(paddle, difficulty="hard")
+    hard_player.set_ball(ball)
+    
+    # Move ball significantly
+    ball.y += 100
+    
+    # Update with shorter delay
+    ticks = 50  # Set time that should be within hard difficulty reaction time
+    hard_player.update()
+    
+    # Verify paddle moves faster in hard mode
+    assert paddle.y != GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
