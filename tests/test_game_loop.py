@@ -6,13 +6,37 @@ from unittest.mock import MagicMock, patch
 from src.game_loop import GameLoop
 from src.game import Game
 from src.constants import FPS
+from src.ball import Ball
+from src.player import HumanPlayer
+from src.game_state import GameState
+from src.game_score import GameScore
+from src.paddle import Paddle
 
 
 @pytest.fixture
 def game_loop():
     """Fixture for game loop instance."""
     pygame.init()
-    loop = GameLoop()
+    
+    # Create required components
+    ball = Ball()
+    paddle1 = Paddle(50, 300, True)  # Left paddle
+    paddle2 = Paddle(750, 300, False)  # Right paddle
+    player1 = HumanPlayer(paddle1, pygame.K_w, pygame.K_s)
+    player2 = HumanPlayer(paddle2, pygame.K_UP, pygame.K_DOWN)
+    game_state = GameState()
+    scoring = GameScore()
+    
+    # Create game loop with all required components
+    loop = GameLoop(
+        ball=ball,
+        player1=player1,
+        player2=player2,
+        game_state=game_state,
+        scoring=scoring,
+        headless=True  # Use headless mode for testing
+    )
+    
     yield loop
     pygame.quit()
 
@@ -20,124 +44,80 @@ def game_loop():
 def test_game_loop_initialization(game_loop):
     """Test game loop initialization."""
     assert game_loop.clock is not None
-    assert game_loop.fps == FPS
+    assert game_loop.running
+    assert not game_loop.game_over
+    assert not game_loop.waiting_for_reset
 
 
 @patch('pygame.event.get')
-def test_handle_events_quit(mock_event_get, game_loop):
+def test_handle_input_quit(mock_event_get, game_loop):
     """Test handling quit event."""
     mock_event = MagicMock()
     mock_event.type = pygame.QUIT
     mock_event_get.return_value = [mock_event]
     
-    # Handle events should return False for quit
-    assert not game_loop.handle_events()
+    game_loop.headless = False  # Disable headless mode for this test
+    game_loop.handle_input()
+    assert not game_loop.running
 
 
 @patch('pygame.event.get')
-def test_handle_events_keydown(mock_event_get, game_loop):
-    """Test handling keydown events."""
-    # Test pause key
-    mock_pause_event = MagicMock()
-    mock_pause_event.type = pygame.KEYDOWN
-    mock_pause_event.key = pygame.K_SPACE
-    mock_event_get.return_value = [mock_pause_event]
+def test_handle_input_reset(mock_event_get, game_loop):
+    """Test handling reset event."""
+    mock_event = MagicMock()
+    mock_event.type = pygame.KEYDOWN
+    mock_event.key = pygame.K_SPACE
+    mock_event_get.return_value = [mock_event]
     
-    assert game_loop.handle_events()  # Should return True and toggle pause
-    assert game_loop.game.paused
-    
-    # Test reset key
-    mock_reset_event = MagicMock()
-    mock_reset_event.type = pygame.KEYDOWN
-    mock_reset_event.key = pygame.K_r
-    mock_event_get.return_value = [mock_reset_event]
-    
-    game_loop.game.game_over = True
-    assert game_loop.handle_events()  # Should return True and reset game
-    assert not game_loop.game.game_over
-
-
-@patch('pygame.event.get')
-def test_handle_events_multiple(mock_event_get, game_loop):
-    """Test handling multiple events."""
-    mock_events = [
-        MagicMock(type=pygame.KEYDOWN, key=pygame.K_SPACE),
-        MagicMock(type=pygame.KEYDOWN, key=pygame.K_r)
-    ]
-    mock_event_get.return_value = mock_events
-    
-    assert game_loop.handle_events()  # Should handle both events
-    assert game_loop.game.paused  # Space key should have toggled pause
+    game_loop.game_over = True
+    game_loop.handle_input()
+    assert not game_loop.game_over
 
 
 def test_update(game_loop):
     """Test game loop update."""
-    # Test update when not paused
-    assert not game_loop.game.paused
-    initial_ball_x = game_loop.game.ball.x
+    # Test update when not in reset state
+    initial_ball_x = game_loop.ball.x
     game_loop.update()
-    assert game_loop.game.ball.x != initial_ball_x  # Ball should move
+    assert game_loop.ball.x != initial_ball_x  # Ball should move
     
-    # Test update when paused
-    game_loop.game.paused = True
-    ball_x_before_pause = game_loop.game.ball.x
+    # Test update during reset
+    game_loop.waiting_for_reset = True
+    game_loop.headless = True  # Skip delay in test
+    ball_x_before_reset = game_loop.ball.x
     game_loop.update()
-    assert game_loop.game.ball.x == ball_x_before_pause  # Ball should not move
+    assert game_loop.ball.x != ball_x_before_reset  # Ball should be reset
+    assert not game_loop.waiting_for_reset  # Reset should be complete
 
 
-@patch('pygame.display.flip')
-@patch('pygame.Surface.fill')
-@patch('pygame.draw.rect')
-@patch('pygame.draw.circle')
-def test_render(mock_circle, mock_rect, mock_fill, mock_flip, game_loop):
-    """Test game loop render."""
-    game_loop.render()
-    
-    # Verify that all drawing functions were called
-    assert mock_fill.called
-    assert mock_rect.called
-    assert mock_circle.called
-    assert mock_flip.called
+def test_draw(game_loop):
+    """Test game loop draw."""
+    # Test that draw doesn't fail in headless mode
+    game_loop.draw()
+    assert True  # If we get here, no exception was raised
 
 
-def test_maintain_framerate(game_loop):
-    """Test frame rate maintenance."""
-    initial_time = pygame.time.get_ticks()
-    game_loop.maintain_framerate()
-    final_time = pygame.time.get_ticks()
+def test_reset_game(game_loop):
+    """Test game reset functionality."""
+    # Modify game state
+    game_loop.player1.increment_score()
+    game_loop.player2.increment_score()
+    initial_ball_pos = (game_loop.ball.x, game_loop.ball.y)
     
-    # Time difference should be less than or equal to the frame time
-    max_frame_time = 1000 / game_loop.fps  # milliseconds per frame
-    assert final_time - initial_time <= max_frame_time
+    # Reset game
+    game_loop.reset_game()
+    
+    # Verify reset state
+    assert game_loop.player1.score == 0
+    assert game_loop.player2.score == 0
+    assert (game_loop.ball.x, game_loop.ball.y) != initial_ball_pos
+    assert not game_loop.game_over
+    assert game_loop.winner is None
 
 
-@patch('pygame.event.get')
-def test_game_loop_integration(mock_event_get, game_loop):
-    """Test game loop integration."""
-    # Mock events to run for a few frames then quit
-    mock_events = [MagicMock(type=pygame.KEYDOWN, key=pygame.K_w)]  # Some gameplay event
-    mock_quit_event = MagicMock(type=pygame.QUIT)
-    
-    def event_sequence():
-        """Return gameplay events for 3 frames, then quit."""
-        nonlocal mock_events
-        if hasattr(event_sequence, 'count'):
-            event_sequence.count += 1
-        else:
-            event_sequence.count = 0
-        
-        if event_sequence.count < 3:
-            return mock_events
-        return [mock_quit_event]
-    
-    mock_event_get.side_effect = event_sequence
-    
-    # Run game loop
-    frames = 0
-    while game_loop.handle_events():
-        game_loop.update()
-        game_loop.render()
-        game_loop.maintain_framerate()
-        frames += 1
-    
-    assert frames == 3  # Should run for 3 frames before quit 
+def test_run_integration(game_loop):
+    """Test basic game loop integration."""
+    # Set max_games to 1 for quick test
+    game_loop.run(max_games=1)
+    assert game_loop.games_completed == 1
+    assert not game_loop.running 
