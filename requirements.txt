@@ -1,5 +1,5 @@
 pygame==2.5.2
-numpy==1.24.3
+numpy==2.2.2
 tensorflow==2.15.0  # For AI player neural network
 tensorboard==2.15.1  # For training visualization
 pytest==7.4.3  # For testing
