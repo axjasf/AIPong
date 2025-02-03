@@ -12,6 +12,10 @@ from src.constants import (
     GAME_AREA_TOP,
     GAME_AREA_HEIGHT,
     PADDLE_HEIGHT,
+    P1_UP_KEY,
+    P1_DOWN_KEY,
+    P2_UP_KEY,
+    P2_DOWN_KEY,
 )
 import logging
 
@@ -194,9 +198,9 @@ def test_player_movement(game):
     initial_left_y = game.paddles[0].get_y()
     initial_right_y = game.paddles[1].get_y()
     
-    # Simulate left player moving up
-    keys = [0] * 512  # pygame.K_LAST
-    keys[pygame.K_w] = 1
+    # Create a properly sized key array using pygame's actual size
+    keys = [0] * (max(P1_UP_KEY, P1_DOWN_KEY, P2_UP_KEY, P2_DOWN_KEY) + 1)
+    keys[P1_UP_KEY] = 1  # Use the actual constant for W key
     pygame.event.get = lambda: []  # Mock event queue
     pygame.key.get_pressed = lambda: keys
     
