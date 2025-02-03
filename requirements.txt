@@ -5,4 +5,4 @@ tensorboard==2.15.1  # For training visualization
 pytest==7.4.3  # For testing
 black==23.11.0  # For code formatting
 pylint==3.0.2  # For code linting
-mypy==1.7.1  # For type checking 
+mypy==1.14.1  # For type checking 
