@@ -112,7 +112,7 @@ def test_reset_game(game_loop):
     # Modify game state
     game_loop.player1.increment_score()
     game_loop.player2.increment_score()
-    initial_ball_pos = (game_loop.ball.x, game_loop.ball.y)
+    initial_velocity = (game_loop.ball.dx, game_loop.ball.dy)
     
     # Reset game
     game_loop.reset_game()
@@ -120,7 +120,9 @@ def test_reset_game(game_loop):
     # Verify reset state
     assert game_loop.player1.score == 0
     assert game_loop.player2.score == 0
-    assert (game_loop.ball.x, game_loop.ball.y) != initial_ball_pos
+    # Ball should be in center but with new velocity
+    current_velocity = (game_loop.ball.dx, game_loop.ball.dy)
+    assert current_velocity != initial_velocity, f"Ball velocity should change after reset. Was {initial_velocity}, still {current_velocity}"
     assert not game_loop.game_over
     assert game_loop.winner is None
 
