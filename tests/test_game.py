@@ -13,6 +13,7 @@ from src.constants import (
     GAME_AREA_HEIGHT,
     PADDLE_HEIGHT,
 )
+import logging
 
 
 @pytest.fixture
@@ -80,15 +81,27 @@ def test_game_pause_toggle(game):
 
 def test_ball_paddle_collision(game):
     """Test ball collision with paddles."""
-    # Position ball near left paddle
-    game.ball.x = PADDLE_WIDTH + BALL_SIZE
+    # Position ball near left paddle's right edge
+    game.ball.x = game.paddles[0].rect.right - BALL_SIZE // 2  # Position ball overlapping with paddle
     game.ball.y = game.paddles[0].get_y() + PADDLE_HEIGHT // 2
+    game.ball.speed = 2.0  # Set a slower speed
+    game.ball.dx = -game.ball.speed  # Move left at full speed
+    game.ball.dy = 0  # No vertical movement to simplify test
+    
+    # Update ball's rect to match new position
+    game.ball.rect.x = int(game.ball.x)
+    game.ball.rect.y = int(game.ball.y)
+    
+    # Store initial speed for comparison
+    initial_speed = game.ball.speed
     
     # Update game
     game.update()
     
-    # Ball should bounce off paddle
-    assert game.left_hits_this_point == 1
+    # Ball should bounce off paddle (direction should reverse)
+    assert game.ball.dx > 0, "Ball should change direction after hitting paddle"
+    assert game.ball.speed > initial_speed, "Ball should increase speed after collision"
+    assert game.ball.x >= game.paddles[0].rect.right, "Ball should be past the paddle's right edge"
 
 
 def test_ball_wall_collision(game):
