@@ -210,8 +210,8 @@ def test_player_movement(game):
     # Left paddle should move up
     assert game.paddles[0].get_y() < initial_left_y
     
-    # Right paddle position may change based on AI/computer behavior
-    assert game.paddles[1].get_y() != initial_right_y
+    # Right paddle should not move (no key pressed)
+    assert game.paddles[1].get_y() == initial_right_y
 
 
 def test_game_over_condition(game):
