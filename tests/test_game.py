@@ -133,16 +133,28 @@ def test_scoring(game):
     # Move ball past right paddle
     initial_score = game.score[0]  # Left player score
     game.ball.x = WINDOW_WIDTH + BALL_SIZE
+    game.headless = True  # Enable headless mode to skip reset delay
     
-    # Update game
+    # Update ball's rect to match new position
+    game.ball.rect.x = int(game.ball.x)
+    game.ball.rect.y = int(game.ball.y)
+    
+    # Update game to trigger scoring
     game.update()
     
     # Left player should score
-    assert game.score[0] == initial_score + 1
+    assert game.score[0] == initial_score + 1, "Score should increment"
+    assert game.waiting_for_reset, "Game should be waiting to reset ball"
     
-    # Ball should reset to center
-    assert WINDOW_WIDTH // 3 < game.ball.x < 2 * WINDOW_WIDTH // 3
-    assert GAME_AREA_TOP < game.ball.y < GAME_AREA_TOP + GAME_AREA_HEIGHT
+    # Update again to perform the reset
+    game.update()
+    
+    # Ball should be at center
+    center_x = WINDOW_WIDTH / 2 - game.ball.size / 2
+    center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (game.ball.size / 2)
+    assert game.ball.x == center_x, "Ball should be centered horizontally"
+    assert game.ball.y == center_y, "Ball should be centered vertically"
+    assert not game.waiting_for_reset, "Reset should be complete"
 
 
 def test_player_movement(game):
