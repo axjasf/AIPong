@@ -69,9 +69,19 @@ def test_handle_input_reset(mock_event_get, game_loop):
     mock_event.key = pygame.K_SPACE
     mock_event_get.return_value = [mock_event]
     
+    # Setup game state
+    game_loop.headless = False  # Disable headless mode for this test
     game_loop.game_over = True
+    game_loop.winner = "Player 1"
+    game_loop.player1.increment_score()
+    
+    # Trigger reset
     game_loop.handle_input()
+    
+    # Verify reset occurred
     assert not game_loop.game_over
+    assert game_loop.winner is None
+    assert game_loop.player1.score == 0
 
 
 def test_update(game_loop):
