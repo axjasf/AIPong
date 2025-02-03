@@ -51,6 +51,7 @@ class GameLoop:
         self.player2 = player2
         self.game_state = game_state
         self.scoring = scoring
+        self.headless = headless
 
         # Initialize display if not headless
         self.screen = None
@@ -93,20 +94,6 @@ class GameLoop:
         self.player1.paddle.set_y(paddle_y)
         self.player2.paddle.set_y(paddle_y)
 
-        self.games_completed += 1
-
-        # Print only at 10% intervals of total games
-        if self.headless and self.max_games:
-            milestone = self.max_games // 10
-            if self.games_completed % milestone == 0:
-                progress = (self.games_completed * 100) // self.max_games
-                self.logger.info(
-                    "Training Progress: %d%% (%d/%d games)",
-                    progress,
-                    self.games_completed,
-                    self.max_games,
-                )
-
         # Stop if we've reached max games
         if self.max_games and self.games_completed >= self.max_games:
             self.running = False
@@ -115,7 +102,27 @@ class GameLoop:
         """Update game state."""
         if self.game_over:
             self.logger.info("Game over. Winner: %s", self.winner)
+            self.logger.debug("Games completed before reset: %d", self.games_completed)
             self.reset_game()
+            self.games_completed += 1
+            self.logger.debug("Games completed after increment: %d", self.games_completed)
+
+            # Print only at 10% intervals of total games
+            if self.headless and self.max_games:
+                milestone = self.max_games // 10
+                if self.games_completed % milestone == 0:
+                    progress = (self.games_completed * 100) // self.max_games
+                    self.logger.info(
+                        "Training Progress: %d%% (%d/%d games)",
+                        progress,
+                        self.games_completed,
+                        self.max_games,
+                    )
+
+            # Stop if we've reached max games
+            if self.max_games and self.games_completed >= self.max_games:
+                self.logger.debug("Reached max games (%d), stopping", self.max_games)
+                self.running = False
             return
 
         if self.waiting_for_reset:
@@ -228,6 +235,17 @@ class GameLoop:
             Tuple of (player1 if AI, player2 if AI)
         """
         self.max_games = max_games
+
+        # If we start in game over state, handle it immediately
+        if self.game_over:
+            self.logger.info("Game over. Winner: %s", self.winner)
+            self.reset_game()
+            self.games_completed += 1
+            self.running = False
+            return (
+                self.player1 if isinstance(self.player1, AIPlayer) else None,
+                self.player2 if isinstance(self.player2, AIPlayer) else None,
+            )
 
         while self.running:
             self.handle_input()
