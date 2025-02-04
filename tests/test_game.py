@@ -152,14 +152,15 @@ def test_ball_wall_collision(game):
     
     # Store initial values
     initial_dy = game.ball.dy
+    initial_dx = game.ball.dx
     
     # Update game
     game.update()
     
     # Ball should bounce off wall
     assert game.ball.dy > 0, "Ball should change vertical direction after hitting wall"
-    assert abs(game.ball.dy) == abs(initial_dy), "Ball should maintain speed after wall collision"
-    assert game.ball.dx == 2.0, "Horizontal velocity should not change"
+    assert abs(abs(game.ball.dy) - abs(initial_dy)) < 1e-10, "Ball should maintain speed after wall collision"
+    assert abs(game.ball.dx - initial_dx) < 1e-10, "Horizontal velocity should be preserved"
     assert game.ball.y >= GAME_AREA_TOP, "Ball should not go beyond game area"
 
 
