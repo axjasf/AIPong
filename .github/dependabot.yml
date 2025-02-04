@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "security"
+    reviewers:
+      - "axjasf"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    ignore:
+      - dependency-name: "black"
+      - dependency-name: "pylint"
+      - dependency-name: "mypy"
+      - dependency-name: "pytest*"
+    versioning-strategy: increase-if-necessary
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "production" 

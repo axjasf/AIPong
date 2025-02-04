@@ -7,19 +7,52 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  quality:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9]
-
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
       with:
-        python-version: ${{ matrix.python-version }}
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-cov black pylint mypy pytest-xunit
+    
+    - name: Run Black Code Formatter
+      id: black
+      run: |
+        black --check src/ tests/ || (echo "::error::Code formatting check failed. Run 'black .' locally" && exit 1)
+    
+    - name: Run MyPy Type Checker
+      id: mypy
+      run: |
+        mypy src/ tests/ || (echo "::error::Type checking failed" && exit 1)
+    
+    - name: Run Pylint
+      id: pylint
+      run: |
+        pylint src/ tests/ --fail-under=9.0 || (echo "::error::Linting failed" && exit 1)
+
+  tests:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
     
     - name: Install system dependencies
       run: |
@@ -30,41 +63,32 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest-cov black pylint mypy
+        pip install pytest-cov pytest-xunit
     
-    - name: Run tests with coverage
+    - name: Run Tests
+      id: pytest
       run: |
-        pytest --cov=src/ tests/ --cov-report=xml
+        pytest --cov=src/ tests/ --cov-report=xml --junitxml=test-results.xml || (echo "::error::Tests failed" && exit 1)
     
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
-      with:
-        file: ./coverage.xml
-    
-    - name: Check formatting with Black
-      run: |
-        black --check src/ tests/
-    
-    - name: Lint with pylint
-      run: |
-        pylint src/ tests/
-    
-    - name: Type check with mypy
-      run: |
-        mypy src/ tests/
+    - name: SonarCloud Analysis
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   deploy:
-    needs: test
+    name: Deploy Package
+    needs: [quality, tests]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: '3.13'
     
     - name: Install dependencies
       run: |
