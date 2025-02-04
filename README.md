@@ -10,7 +10,6 @@ A modern implementation of the classic Pong game with AI capabilities, built usi
   - Human vs AI
   - AI vs AI
 - AI player with reinforcement learning capabilities
-- Game state recording for AI training
 - Headless mode for fast AI training
 - Configurable game settings
 - Comprehensive logging system
@@ -52,7 +51,6 @@ Available command-line options:
 - `--player1`: Type of player 1 (left paddle) - "human" or "ai"
 - `--player2`: Type of player 2 (right paddle) - "human" or "ai"
 - `--headless`: Run without graphics (for training)
-- `--record`: Record game states for training
 - `--max-games`: Maximum number of games to play
 
 Examples:
@@ -61,7 +59,7 @@ Examples:
 python -m src.main --player2 ai
 
 # AI vs AI training
-python -m src.main --player1 ai --player2 ai --headless --record --max-games 1000
+python -m src.main --player1 ai --player2 ai --headless --max-games 1000
 ```
 
 ### Controls
@@ -91,11 +89,9 @@ ai-pong/
 │   ├── game_state.py    # Game state management
 │   ├── game_score.py    # Scoring system
 │   ├── game_loop.py     # Main game loop
-│   ├── game_recorder.py # Game state recording
 │   └── constants.py     # Game constants
 ├── tests/               # Test files
 ├── models/              # Saved AI models
-├── training_data/       # Recorded game data
 ├── logs/               # Game logs
 ├── requirements.txt    # Project dependencies
 └── README.md          # This file

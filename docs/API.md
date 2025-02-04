@@ -10,15 +10,13 @@ The main game orchestrator that manages the game loop and state.
 class Game:
     def __init__(self, player1_type: Type[Player] = HumanPlayer, 
                  player2_type: Type[Player] = HumanPlayer,
-                 headless: bool = False,
-                 record_gameplay: bool = False) -> None
+                 headless: bool = False) -> None
 ```
 
 **Parameters:**
 - `player1_type`: Class for player 1 (left)
 - `player2_type`: Class for player 2 (right)
 - `headless`: If True, run without graphics (for training)
-- `record_gameplay`: If True, record human gameplay for AI learning
 
 **Methods:**
 - `run(max_games: Optional[int] = None) -> Tuple[AIPlayer, AIPlayer]`: Main game loop
@@ -60,7 +58,6 @@ class AIPlayer(Player):
 
 **Methods:**
 - `learn(reward: float) -> None`: Update weights based on reward
-- `learn_from_human_games() -> None`: Learn from recorded gameplay
 - `on_game_end(won: bool) -> None`: Process end of game
 
 ### Ball
@@ -109,18 +106,6 @@ game.run()
 # Training AI
 game = Game(AIPlayer, AIPlayer, headless=True)
 game.run(max_games=1000)
-```
-
-### Recording Human Gameplay
-
-```python
-# Record a human game
-game = Game(HumanPlayer, HumanPlayer, record_gameplay=True)
-game.run()
-
-# Train AI from recordings
-ai_game = Game(AIPlayer, AIPlayer)
-ai_game.player1.learn_from_human_games()
 ```
 
 ## Constants

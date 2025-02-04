@@ -29,7 +29,6 @@ from .ball import Ball
 from .player import HumanPlayer, AIPlayer
 from .game_state import GameState
 from .game_score import GameScore
-from .game_recorder import GameRecorder
 
 
 class GameLoop:
@@ -43,7 +42,6 @@ class GameLoop:
         player2: Union[HumanPlayer, AIPlayer],
         game_state: GameState,
         scoring: GameScore,
-        recorder: Optional[GameRecorder] = None,
         headless: bool = False,
     ) -> None:
         """Initialize the game loop system."""
@@ -53,7 +51,6 @@ class GameLoop:
         self.player2 = player2
         self.game_state = game_state
         self.scoring = scoring
-        self.recorder = recorder
         self.headless = headless
 
         # Initialize display if not headless
@@ -97,36 +94,35 @@ class GameLoop:
         self.player1.paddle.set_y(paddle_y)
         self.player2.paddle.set_y(paddle_y)
 
-        self.games_completed += 1
-
-        # Print only at 10% intervals of total games
-        if self.headless and self.max_games:
-            milestone = self.max_games // 10
-            if self.games_completed % milestone == 0:
-                progress = (self.games_completed * 100) // self.max_games
-                self.logger.info(
-                    "Training Progress: %d%% (%d/%d games)",
-                    progress,
-                    self.games_completed,
-                    self.max_games,
-                )
-
         # Stop if we've reached max games
         if self.max_games and self.games_completed >= self.max_games:
             self.running = False
-
-        if self.recorder:
-            self.recorder.end_game()
-            self.recorder.start_game()
 
     def update(self) -> None:
         """Update game state."""
         if self.game_over:
             self.logger.info("Game over. Winner: %s", self.winner)
+            self.logger.debug("Games completed before reset: %d", self.games_completed)
             self.reset_game()
-            if self.recorder:
-                self.recorder.end_game()
-                self.recorder.start_game()
+            self.games_completed += 1
+            self.logger.debug("Games completed after increment: %d", self.games_completed)
+
+            # Print only at 10% intervals of total games
+            if self.headless and self.max_games:
+                milestone = self.max_games // 10
+                if self.games_completed % milestone == 0:
+                    progress = (self.games_completed * 100) // self.max_games
+                    self.logger.info(
+                        "Training Progress: %d%% (%d/%d games)",
+                        progress,
+                        self.games_completed,
+                        self.max_games,
+                    )
+
+            # Stop if we've reached max games
+            if self.max_games and self.games_completed >= self.max_games:
+                self.logger.debug("Reached max games (%d), stopping", self.max_games)
+                self.running = False
             return
 
         if self.waiting_for_reset:
@@ -139,10 +135,6 @@ class GameLoop:
                 paddle_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT // 2) - (PADDLE_HEIGHT // 2)
                 self.player1.paddle.set_y(paddle_y)
                 self.player2.paddle.set_y(paddle_y)
-                # Start recording a new point/rally
-                if self.recorder:
-                    self.recorder.end_game()  # End previous point
-                    self.recorder.start_game()  # Start new point
         else:
             # Get previous paddle positions for movement detection
             prev_left_y = self.player1.paddle.get_y()
@@ -181,16 +173,6 @@ class GameLoop:
 
             # Handle scoring
             if result:
-                if self.recorder:
-                    # Record who won the point
-                    side = "left" if result == "p1_scored" else "right"
-                    hits = (
-                        self.game_state.left_hits
-                        if side == "left"
-                        else self.game_state.right_hits
-                    )
-                    self.recorder.set_winner(side, hits)
-
                 # Update scores
                 if result == "p1_scored":
                     self.scoring.increment_score(True)
@@ -214,20 +196,6 @@ class GameLoop:
                     self.player1.on_game_end(winner_idx == 0)
                 if isinstance(self.player2, AIPlayer):
                     self.player2.on_game_end(winner_idx == 1)
-
-            # Record frame if in human game
-            if self.recorder:
-                self.recorder.update_frame(
-                    state,
-                    self.ball.x,
-                    self.ball.y,
-                    self.player1.paddle.get_y(),
-                    self.player2.paddle.get_y(),
-                    left_moved_up,
-                    right_moved_up,
-                    left_hit_ball,
-                    right_hit_ball,
-                )
 
     def draw(self) -> None:
         """Draw the game state."""
@@ -267,6 +235,17 @@ class GameLoop:
             Tuple of (player1 if AI, player2 if AI)
         """
         self.max_games = max_games
+
+        # If we start in game over state, handle it immediately
+        if self.game_over:
+            self.logger.info("Game over. Winner: %s", self.winner)
+            self.reset_game()
+            self.games_completed += 1
+            self.running = False
+            return (
+                self.player1 if isinstance(self.player1, AIPlayer) else None,
+                self.player2 if isinstance(self.player2, AIPlayer) else None,
+            )
 
         while self.running:
             self.handle_input()
