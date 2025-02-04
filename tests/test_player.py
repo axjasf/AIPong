@@ -11,6 +11,7 @@ from src.constants import (
     PADDLE_HEIGHT,
     PADDLE_SPEED,
 )
+from .test_utils import assert_float_equal
 
 
 @pytest.fixture
@@ -43,7 +44,7 @@ def test_computer_player_initialization(paddle):
     assert player.paddle == paddle
     assert player.score == 0
     assert player.ball is None
-    assert player.last_ball_y == 0.0
+    assert_float_equal(player.last_ball_y, 0.0, msg="Initial last_ball_y should be 0")
 
 
 def test_computer_player_no_movement_without_ball(paddle):

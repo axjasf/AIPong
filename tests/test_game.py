@@ -17,6 +17,7 @@ from src.constants import (
     P2_UP_KEY,
     P2_DOWN_KEY,
 )
+from .test_utils import assert_float_equal, assert_floats_equal, assert_floats_not_equal
 import logging
 
 
@@ -98,11 +99,11 @@ def test_game_reset(game):
     # Verify reset state
     assert game.score == (0, 0)  # Scores should reset to 0-0
     # Ball should be back at center (same position)
-    assert (game.ball.x, game.ball.y) == initial_ball_pos
+    assert_floats_equal((game.ball.x, game.ball.y), initial_ball_pos, msg="Ball position should be reset")
     # Ball velocity should be randomized (different direction)
-    assert (game.ball.dx, game.ball.dy) != initial_ball_vel
-    assert game.paddles[0].get_y() == initial_p1_y
-    assert game.paddles[1].get_y() == initial_p2_y
+    assert_floats_not_equal((game.ball.dx, game.ball.dy), initial_ball_vel, msg="Ball velocity should be different")
+    assert_float_equal(game.paddles[0].get_y(), initial_p1_y, msg="Left paddle should be reset")
+    assert_float_equal(game.paddles[1].get_y(), initial_p2_y, msg="Right paddle should be reset")
 
 
 def test_game_pause_toggle(game):
@@ -159,8 +160,8 @@ def test_ball_wall_collision(game):
     
     # Ball should bounce off wall
     assert game.ball.dy > 0, "Ball should change vertical direction after hitting wall"
-    assert abs(abs(game.ball.dy) - abs(initial_dy)) < 1e-10, "Ball should maintain speed after wall collision"
-    assert abs(game.ball.dx - initial_dx) < 1e-10, "Horizontal velocity should be preserved"
+    assert_float_equal(abs(game.ball.dy), abs(initial_dy), msg="Ball should maintain speed after wall collision")
+    assert_float_equal(game.ball.dx, initial_dx, msg="Horizontal velocity should be preserved")
     assert game.ball.y >= GAME_AREA_TOP, "Ball should not go beyond game area"
 
 
@@ -188,8 +189,8 @@ def test_scoring(game):
     # Ball should be at center
     center_x = WINDOW_WIDTH / 2 - game.ball.size / 2
     center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (game.ball.size / 2)
-    assert game.ball.x == center_x, "Ball should be centered horizontally"
-    assert game.ball.y == center_y, "Ball should be centered vertically"
+    assert_float_equal(game.ball.x, center_x, msg="Ball should be centered horizontally")
+    assert_float_equal(game.ball.y, center_y, msg="Ball should be centered vertically")
     assert not game.waiting_for_reset, "Reset should be complete"
 
 
@@ -256,10 +257,10 @@ def test_point_scored_reset(game):
     # Ball should be back at center with new direction
     center_x = WINDOW_WIDTH / 2 - game.ball.size / 2
     center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT / 2) - (game.ball.size / 2)
-    assert (game.ball.x, game.ball.y) == (center_x, center_y)  # Exactly at center
-    assert (game.ball.dx, game.ball.dy) != initial_ball_vel  # New direction
+    assert_floats_equal((game.ball.x, game.ball.y), (center_x, center_y), msg="Ball should be centered")
+    assert_floats_not_equal((game.ball.dx, game.ball.dy), initial_ball_vel, msg="Ball should have new direction")
     
     # Paddles should be back at center height
     paddle_center_y = GAME_AREA_TOP + (GAME_AREA_HEIGHT - PADDLE_HEIGHT) // 2
-    assert game.paddles[0].get_y() == paddle_center_y
-    assert game.paddles[1].get_y() == paddle_center_y 
+    assert_float_equal(game.paddles[0].get_y(), paddle_center_y, msg="Left paddle should be centered")
+    assert_float_equal(game.paddles[1].get_y(), paddle_center_y, msg="Right paddle should be centered") 
